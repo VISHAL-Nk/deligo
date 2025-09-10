@@ -8,53 +8,78 @@ import { sendVerificationEmail } from "@/lib/mailer";
 import { signUpSchema, SignUpType } from "@/schema/signUpSchema";
 
 export async function POST(req: Request) {
-  await dbConnect();
-  const body = await req.json();
-  const parseResult = signUpSchema.safeParse(body);
+  try {
+    await dbConnect();
+    const body = await req.json();
+    const parseResult = signUpSchema.safeParse(body);
 
-  if (!parseResult.success) {
-    return new Response(JSON.stringify({ error: parseResult.error.issues }), {
-      status: 400,
+    if (!parseResult.success) {
+      return new Response(JSON.stringify({ error: parseResult.error.issues }), {
+        status: 400,
+      });
+    }
+    const { email, password, confirmPassword } = parseResult.data as SignUpType;
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return new Response(
+        JSON.stringify({ error: "Email already registered" }),
+        {
+          status: 400,
+        }
+      );
+    }
+    if (password !== confirmPassword) {
+      return new Response(JSON.stringify({ error: "Passwords do not match" }), {
+        status: 400,
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const newUser = await User.create({
+      email,
+      passwordHash,
+      role: "customer",
+      isVerified: false,
     });
-  }
-  const { email, password,confirmPassword } = parseResult.data as SignUpType;
 
-  const existing = await User.findOne({ email });
-  if (existing) {
-    return new Response(JSON.stringify({ error: "Email already registered" }), {
-      status: 400,
+    await UserProfile.create({
+      userId: newUser._id,
+      fullName: "",
+      phone: "",
+      gender: "",
+      dateOfBirth: null,
+      addresses: [],
+      preferences: {},
     });
+
+    // generate + send token
+    const token = generateEmailToken(newUser._id.toString());
+    await sendVerificationEmail(newUser.email, token);
+
+    return new Response(
+      JSON.stringify({ message: "Signup successful, check email to verify." }),
+      { status: 200 }
+    );
+  } catch (error) {
+    let errorMessage = "An unknown error occurred.";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      console.error("Signup Route Error:", error.message, {
+        stack: error.stack,
+      });
+    } else {
+      console.error("Signup Route encountered a non-Error exception:", error);
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: "An unexpected server error occurred. Please try again later.",
+      }),
+      {
+        status: 500, 
+      }
+    );
   }
-  if(password !== confirmPassword){
-    return new Response(JSON.stringify({ error: "Passwords do not match" }), {
-      status: 400,
-    });
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const newUser = await User.create({
-    email,
-    passwordHash,
-    role: "customer",
-    isVerified: false,
-  });
-
-  await UserProfile.create({
-    userId: newUser._id,
-    fullName: "",
-    phone: "",
-    gender: "",
-    dateOfBirth: null,
-    addresses: [],
-    preferences: {},
-  });
-
-  // generate + send token
-  const token = generateEmailToken(newUser._id.toString());
-  await sendVerificationEmail(newUser.email, token);
-
-  return new Response(
-    JSON.stringify({ message: "Signup successful, check email to verify." }),
-    { status: 200 }
-  );
 }
