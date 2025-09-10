@@ -8,6 +8,8 @@ import User from "@/models/User.models";
 import UserProfile from "@/models/UserProfiles.models";
 import type { UserDocument } from "@/types/mongooose";
 import type { User as NextAuthUser } from "next-auth";
+import { loginSchema, LoginInput } from "@/schema/signInSchema";
+import { z } from "zod";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -27,31 +29,39 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials): Promise<NextAuthUser | null> {
         await dbConnect();
-        const user: UserDocument | null = await User.findOne({
-          email: credentials?.email,
-        });
-        if (!user) throw new Error("User not found");
 
-        if (!user.passwordHash) throw new Error("Use OAuth to login");
+        try {
+          // ✅ Validate credentials with Zod
+          const parsed: LoginInput = loginSchema.parse(credentials);
 
-        const isValid = await bcrypt.compare(
-          credentials!.password,
-          user.passwordHash
-        );
-        if (!isValid) throw new Error("Invalid password");
+          const user: UserDocument | null = await User.findOne({
+            email: parsed.email,
+          });
+          if (!user) throw new Error("User not found");
 
-        if (!user.isVerified) throw new Error("Please verify your email first");
+          if (!user.passwordHash) throw new Error("Use OAuth to login");
 
-        user.lastLoginAt = new Date();
-        await user.save();
+          const isValid = await bcrypt.compare(parsed.password, user.passwordHash);
+          if (!isValid) throw new Error("Invalid password");
 
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified,
-          hasProfile: false,
-        };
+          if (!user.isVerified) throw new Error("Please verify your email first");
+
+          user.lastLoginAt = new Date();
+          await user.save();
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            role: user.role,
+            isVerified: user.isVerified,
+            hasProfile: false,
+          };
+        } catch (err) {
+          if (err instanceof z.ZodError) {
+            throw new Error(err.issues.map(e => e.message).join(", "));
+          }
+          throw err;
+        }
       },
     }),
   ],

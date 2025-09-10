@@ -5,14 +5,28 @@ import UserProfile from "@/models/UserProfiles.models";
 import bcrypt from "bcryptjs";
 import { generateEmailToken } from "@/lib/emailToken";
 import { sendVerificationEmail } from "@/lib/mailer";
+import { signUpSchema, SignUpType } from "@/schema/signUpSchema";
 
 export async function POST(req: Request) {
   await dbConnect();
-  const { email, password } = await req.json();
+  const body = await req.json();
+  const parseResult = signUpSchema.safeParse(body);
+
+  if (!parseResult.success) {
+    return new Response(JSON.stringify({ error: parseResult.error.issues }), {
+      status: 400,
+    });
+  }
+  const { email, password,confirmPassword } = parseResult.data as SignUpType;
 
   const existing = await User.findOne({ email });
   if (existing) {
     return new Response(JSON.stringify({ error: "Email already registered" }), {
+      status: 400,
+    });
+  }
+  if(password !== confirmPassword){
+    return new Response(JSON.stringify({ error: "Passwords do not match" }), {
       status: 400,
     });
   }
