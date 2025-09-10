@@ -7,6 +7,7 @@ declare module "next-auth" {
       email: string;
       role: "customer" | "seller" | "delivery" | "support" | "admin";
       isVerified: boolean;
+      hasProfile: boolean;
     };
   }
 
@@ -15,6 +16,7 @@ declare module "next-auth" {
     email: string;
     role: "customer" | "seller" | "delivery" | "support" | "admin";
     isVerified: boolean;
+    hasProfile: boolean;
   }
 }
 
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: "customer" | "seller" | "delivery" | "support" | "admin";
     isVerified: boolean;
+    hasProfile: boolean;
   }
 }

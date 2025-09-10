@@ -27,7 +27,9 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials): Promise<NextAuthUser | null> {
         await dbConnect();
-        const user: UserDocument | null = await User.findOne({ email: credentials?.email });
+        const user: UserDocument | null = await User.findOne({
+          email: credentials?.email,
+        });
         if (!user) throw new Error("User not found");
 
         if (!user.passwordHash) throw new Error("Use OAuth to login");
@@ -48,6 +50,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
           isVerified: user.isVerified,
+          hasProfile: false,
         };
       },
     }),
@@ -75,6 +78,8 @@ export const authOptions: NextAuthOptions = {
           | "admin";
 
         token.isVerified = (user as NextAuthUser).isVerified;
+        const profile = await UserProfile.findOne({ userId: user.id });
+        token.hasProfile = !!(profile && profile.fullName && profile.phone);
       }
       return token;
     },
@@ -89,6 +94,7 @@ export const authOptions: NextAuthOptions = {
           | "admin";
 
         session.user.isVerified = token.isVerified as boolean;
+        session.user.hasProfile = token.hasProfile as boolean;
       }
       return session;
     },
