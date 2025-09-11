@@ -78,21 +78,34 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, account }) {
       if (user) {
-        token.id = user.id;
-        token.role = (user as NextAuthUser).role as
-          | "customer"
-          | "seller"
-          | "delivery"
-          | "support"
-          | "admin";
-        token.isVerified = (user as NextAuthUser).isVerified;
-        token.hasProfile = (user as NextAuthUser).hasProfile;
+        // For OAuth providers, we need to find the user by email since user.id is the provider's ID
+        if (account?.provider !== "credentials") {
+          await dbConnect();
+          const dbUser = await User.findOne({ email: user.email });
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.role = dbUser.role;
+            token.isVerified = dbUser.isVerified;
+            token.hasProfile = dbUser.hasProfile;
+          }
+        } else {
+          // For credentials provider, user.id is already the correct MongoDB ObjectId
+          token.id = user.id;
+          token.role = (user as NextAuthUser).role as
+            | "customer"
+            | "seller"
+            | "delivery"
+            | "support"
+            | "admin";
+          token.isVerified = (user as NextAuthUser).isVerified;
+          token.hasProfile = (user as NextAuthUser).hasProfile;
+        }
       }
 
       // Refresh user data on update trigger or when hasProfile is missing
-      if (trigger === "update" || !token.hasProfile) {
+      if (trigger === "update" || (!token.hasProfile && token.id)) {
         await dbConnect();
         const dbUser = await User.findById(token.id);
         if (dbUser) {
@@ -154,6 +167,11 @@ export const authOptions: NextAuthOptions = {
 
       existingUser.lastLoginAt = new Date();
       await existingUser.save();
+
+      // Update user object with database ID for OAuth providers
+      if (account?.provider !== "credentials") {
+        user.id = existingUser._id.toString();
+      }
 
       return true;
     },
