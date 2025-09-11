@@ -1,3 +1,5 @@
+// src/app/api/auth/[...nextauth]/route.ts
+
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -31,7 +33,6 @@ export const authOptions: NextAuthOptions = {
         await dbConnect();
 
         try {
-          // ✅ Validate credentials with Zod
           const parsed: LoginInput = loginSchema.parse(credentials);
 
           const user: UserDocument | null = await User.findOne({
@@ -54,7 +55,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             role: user.role,
             isVerified: user.isVerified,
-            hasProfile: false,
+            hasProfile: user.hasProfile,
           };
         } catch (err) {
           if (err instanceof z.ZodError) {
@@ -77,7 +78,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as NextAuthUser).role as
@@ -86,11 +87,21 @@ export const authOptions: NextAuthOptions = {
           | "delivery"
           | "support"
           | "admin";
-
         token.isVerified = (user as NextAuthUser).isVerified;
-        const profile = await UserProfile.findOne({ userId: user.id });
-        token.hasProfile = !!(profile && profile.fullName && profile.phone);
+        token.hasProfile = (user as NextAuthUser).hasProfile;
       }
+
+      // Refresh user data on update trigger or when hasProfile is missing
+      if (trigger === "update" || !token.hasProfile) {
+        await dbConnect();
+        const dbUser = await User.findById(token.id);
+        if (dbUser) {
+          token.isVerified = dbUser.isVerified;
+          token.role = dbUser.role;
+          token.hasProfile = dbUser.hasProfile;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -102,7 +113,6 @@ export const authOptions: NextAuthOptions = {
           | "delivery"
           | "support"
           | "admin";
-
         session.user.isVerified = token.isVerified as boolean;
         session.user.hasProfile = token.hasProfile as boolean;
       }
@@ -114,22 +124,62 @@ export const authOptions: NextAuthOptions = {
       let existingUser = await User.findOne({ email: user.email });
 
       if (!existingUser) {
+        // Create new user
         existingUser = await User.create({
           email: user.email,
           role: "customer",
           isVerified: account?.provider !== "credentials",
+          hasProfile: false,
         });
 
+        // Create basic profile with name from OAuth provider if available
         await UserProfile.create({
           userId: existingUser._id,
           fullName: user.name || "",
         });
+
+        // If we have a name from OAuth, we can consider the profile as having basic info
+        if (user.name) {
+          existingUser.hasProfile = true;
+          await existingUser.save();
+        }
+      } else {
+        // Check if existing user has a profile
+        const existingProfile = await UserProfile.findOne({ userId: existingUser._id });
+        if (existingProfile && !existingUser.hasProfile) {
+          // User has a profile but hasProfile is false, update it
+          existingUser.hasProfile = true;
+        }
       }
 
       existingUser.lastLoginAt = new Date();
       await existingUser.save();
 
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle relative URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      
+      // Handle same origin URLs
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      
+      // Prevent redirect loops by checking if we're redirecting to signin
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.pathname === "/auth/signin" && urlObj.origin === baseUrl) {
+          return `${baseUrl}/dashboard`; // Redirect to dashboard instead
+        }
+      } catch (e) {
+        console.warn("Invalid URL in redirect:", url);
+      }
+      
+      // Default to base URL for external URLs
+      return baseUrl;
     },
   },
 

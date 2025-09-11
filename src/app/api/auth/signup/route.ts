@@ -1,7 +1,6 @@
 // app/api/auth/signup/route.ts
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User.models";
-import UserProfile from "@/models/UserProfiles.models";
 import bcrypt from "bcryptjs";
 import { generateEmailToken } from "@/lib/emailToken";
 import { sendVerificationEmail } from "@/lib/mailer";
@@ -43,15 +42,6 @@ export async function POST(req: Request) {
       isVerified: false,
     });
 
-    await UserProfile.create({
-      userId: newUser._id,
-      fullName: "",
-      phone: "",
-      gender: "",
-      dateOfBirth: null,
-      addresses: [],
-      preferences: {},
-    });
 
     // generate + send token
     const token = generateEmailToken(newUser._id.toString());

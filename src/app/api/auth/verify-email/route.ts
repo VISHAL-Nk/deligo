@@ -8,15 +8,32 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");
 
-  if (!token) return new Response("Invalid request", { status: 400 });
+  if (!token) {
+    return new Response(JSON.stringify({message:"Check email for verification"}), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
-  const payload = verifyEmailToken(token);
-  if (!payload)
-    return new Response("Invalid or expired token", { status: 400 });
+  try {
+    const payload = verifyEmailToken(token);
+    if (!payload) {
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
-  await User.findByIdAndUpdate(payload.userId, { isVerified: true });
+    await User.findByIdAndUpdate(payload.userId, { isVerified: true });
 
-  return Response.redirect(
-    new URL("/auth/complete-profile", process.env.NEXT_PUBLIC_APP_URL)
-  );
+    return new Response(JSON.stringify({ message: "Email verified successfully" }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Verification failed" }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
