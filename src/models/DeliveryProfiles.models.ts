@@ -54,7 +54,7 @@ const DeliveryProfileSchema = new mongoose.Schema(
 );
 
 const DeliveryProfile =
-  mongoose.models.DeliveryProfile ||
+  mongoose.models?.DeliveryProfile ||
   mongoose.model("DeliveryProfile", DeliveryProfileSchema);
 
 export default DeliveryProfile;

@@ -54,7 +54,7 @@ const SellerProfileSchema = new mongoose.Schema(
 );
 
 const SellerProfile =
-  mongoose.models.SellerProfile ||
+  mongoose.models?.SellerProfile ||
   mongoose.model("SellerProfile", SellerProfileSchema);
 
 export default SellerProfile;

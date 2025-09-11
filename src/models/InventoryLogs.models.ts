@@ -30,7 +30,7 @@ const InventoryLogSchema = new mongoose.Schema(
 );
 
 const InventoryLog =
-  mongoose.models.InventoryLog ||
+  mongoose.models?.InventoryLog ||
   mongoose.model("InventoryLog", InventoryLogSchema);
 
 export default InventoryLog;

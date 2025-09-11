@@ -25,7 +25,7 @@ const SupportProfileSchema = new mongoose.Schema(
 );
 
 const SupportProfile =
-  mongoose.models.SupportProfile ||
+  mongoose.models?.SupportProfile ||
   mongoose.model("SupportProfile", SupportProfileSchema);
 
 export default SupportProfile;

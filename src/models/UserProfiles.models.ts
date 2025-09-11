@@ -33,7 +33,7 @@ const UserProfileSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    fullName: { type: String, required: true },
+    fullName: { type: String },
     phone: { type: String },
     gender: {
       type: String,
@@ -48,7 +48,7 @@ const UserProfileSchema = new mongoose.Schema(
 );
 
 const UserProfile =
-  mongoose.models.UserProfile ||
+  mongoose.models?.UserProfile ||
   mongoose.model("UserProfile", UserProfileSchema);
 
 export default UserProfile;

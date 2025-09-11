@@ -47,7 +47,7 @@ const CustomerSupportTicketSchema = new mongoose.Schema(
 );
 
 const CustomerSupportTicket =
-  mongoose.models.CustomerSupportTicket ||
+  mongoose.models?.CustomerSupportTicket ||
   mongoose.model("CustomerSupportTicket", CustomerSupportTicketSchema);
 
 export default CustomerSupportTicket;   
