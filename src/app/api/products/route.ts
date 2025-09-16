@@ -1,9 +1,18 @@
 
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export default async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if(!session || !session.user){
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
+    }
+    
     await dbConnect();
 
     const products = Product.find({}).sort({ createdAt: -1 });
