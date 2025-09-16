@@ -2,15 +2,34 @@
 
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+// Initialize Redis connection
+const redis = Redis.fromEnv();
+
+// Configure rate limiter - 5 requests per 60 seconds
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.fixedWindow(5, "60 s"), // 5 requests per 60s
+});
 
 export default withAuth(async function middleware(req) {
+  // Rate limiting check - get client IP
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
+  
+  // Apply rate limiting to API routes
+  if (req.nextUrl.pathname.startsWith("/api/")) {
+    const { success } = await ratelimit.limit(ip);
+    
+    if (!success) {
+      return new NextResponse("Too many requests", { status: 429 });
+    }
+  }
+
   const pathname = req.nextUrl.pathname;
   const user = req.nextauth.token;
   const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
-  
-  console.log("Middleware user:", user);
-  console.log("Pathname:", pathname);
-  console.log("CallbackUrl:", callbackUrl);
   
   // Helper function to clean callback URL and prevent loops
   const getCleanCallbackUrl = (url: string | null) => {
@@ -162,7 +181,7 @@ export default withAuth(async function middleware(req) {
   },
 });
 
-// Apply middleware to protected routes and auth pages for redirect logic
+// Apply middleware to protected routes, auth pages, and API routes
 export const config = {
   matcher: [
     "/dashboard/:path*",
@@ -170,6 +189,7 @@ export const config = {
     "/seller/:path*",
     "/support/:path*",
     "/delivery/:path*",
-    "/auth/:path*"
+    "/auth/:path*",
+    "/api/:path*"
   ],
 };
