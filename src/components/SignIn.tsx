@@ -29,7 +29,7 @@ export const SigninPage = () => {
         setErrors({ general: result.error })
       } else {
         // Let middleware handle the redirect based on user state
-        router.push('/dashboard')
+        router.push('/products')
         router.refresh()
       }
     } catch (error) {

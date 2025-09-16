@@ -190,7 +190,7 @@ export const authOptions: NextAuthOptions = {
       try {
         const urlObj = new URL(url);
         if (urlObj.pathname === "/auth/signin" && urlObj.origin === baseUrl) {
-          return `${baseUrl}/dashboard`; // Redirect to dashboard instead
+          return `${baseUrl}/products`; // Redirect to products instead
         }
       } catch (e) {
         console.warn("Invalid URL in redirect:", url);

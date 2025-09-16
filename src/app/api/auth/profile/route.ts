@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
     if (user.hasProfile) {
       return NextResponse.json(
         { 
-          message: "Profile already exists. Redirecting to dashboard.",
-          redirect: "/dashboard"
+          message: "Profile already exists. Redirecting to products.",
+          redirect: "/products"
         },
         { status: 200 }
       );
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { 
         message: "Profile completed successfully.",
-        redirect: "/dashboard"
+        redirect: "/products"
       },
       { status: 200 }
     );
