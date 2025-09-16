@@ -5,7 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { dbConnect } from "@/lib/db";
+import { dbConnect, dbDisconnect } from "@/lib/db";
 import User from "@/models/User.models";
 import UserProfile from "@/models/UserProfiles.models";
 import type { UserDocument } from "@/types/mongooose";
@@ -30,9 +30,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials): Promise<NextAuthUser | null> {
-        await dbConnect();
-
         try {
+          await dbConnect();
+
           const parsed: LoginInput = loginSchema.parse(credentials);
 
           const user: UserDocument | null = await User.findOne({
@@ -42,10 +42,14 @@ export const authOptions: NextAuthOptions = {
 
           if (!user.passwordHash) throw new Error("Use OAuth to login");
 
-          const isValid = await bcrypt.compare(parsed.password, user.passwordHash);
+          const isValid = await bcrypt.compare(
+            parsed.password,
+            user.passwordHash,
+          );
           if (!isValid) throw new Error("Invalid password");
 
-          if (!user.isVerified) throw new Error("Please verify your email first");
+          if (!user.isVerified)
+            throw new Error("Please verify your email first");
 
           user.lastLoginAt = new Date();
           await user.save();
@@ -59,9 +63,11 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (err) {
           if (err instanceof z.ZodError) {
-            throw new Error(err.issues.map(e => e.message).join(", "));
+            throw new Error(err.issues.map((e) => e.message).join(", "));
           }
           throw err;
+        } finally {
+          await dbDisconnect();
         }
       },
     }),
@@ -158,7 +164,9 @@ export const authOptions: NextAuthOptions = {
         }
       } else {
         // Check if existing user has a profile
-        const existingProfile = await UserProfile.findOne({ userId: existingUser._id });
+        const existingProfile = await UserProfile.findOne({
+          userId: existingUser._id,
+        });
         if (existingProfile && !existingUser.hasProfile) {
           // User has a profile but hasProfile is false, update it
           existingUser.hasProfile = true;
@@ -180,12 +188,12 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
       }
-      
+
       // Handle same origin URLs
       if (new URL(url).origin === baseUrl) {
         return url;
       }
-      
+
       // Prevent redirect loops by checking if we're redirecting to signin
       try {
         const urlObj = new URL(url);
@@ -195,7 +203,7 @@ export const authOptions: NextAuthOptions = {
       } catch (e) {
         console.warn("Invalid URL in redirect:", url);
       }
-      
+
       // Default to base URL for external URLs
       return baseUrl;
     },

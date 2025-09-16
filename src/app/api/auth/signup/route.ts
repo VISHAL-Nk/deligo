@@ -1,5 +1,5 @@
 // app/api/auth/signup/route.ts
-import { dbConnect } from "@/lib/db";
+import { dbConnect, dbDisconnect } from "@/lib/db";
 import User from "@/models/User.models";
 import bcrypt from "bcryptjs";
 import { generateEmailToken } from "@/lib/emailToken";
@@ -71,5 +71,8 @@ export async function POST(req: Request) {
         status: 500, 
       }
     );
+  }
+  finally{
+    await dbDisconnect();
   }
 }
