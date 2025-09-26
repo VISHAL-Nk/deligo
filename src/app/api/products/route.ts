@@ -3,7 +3,7 @@ import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
 import { Session } from "@/lib/Session";
 
-export default async function GET() {
+export  async function GET() {
   try {
     const session = await Session();
     if(!session || !session.user){

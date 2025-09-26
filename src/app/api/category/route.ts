@@ -3,7 +3,7 @@ import { Session } from "@/lib/Session";
 import Category from "@/models/ProductCategories.models";
 import Product from "@/models/Products.models";
 
-export default async function GET(request: Request){
+export  async function GET(request: Request){
     try{
         const session = Session();
         if(!session){

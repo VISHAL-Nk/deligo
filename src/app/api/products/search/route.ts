@@ -3,7 +3,7 @@ import Product from "@/models/Products.models";
 import { type NextRequest } from "next/server";
 import { Session } from "@/lib/Session";
 
-export default async function GET(req: NextRequest) {
+export  async function GET(req: NextRequest) {
   try {
     const searchParams = new URL(req.url).searchParams;
     const query = searchParams.get("q") || "";
