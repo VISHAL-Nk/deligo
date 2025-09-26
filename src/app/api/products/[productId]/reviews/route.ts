@@ -1,7 +1,6 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { dbConnect } from "@/lib/db";
+import { Session } from "@/lib/Session";
 import Review from "@/models/Reviews.models";
-import { getServerSession } from "next-auth";
 
 export async function GET(
   request: Request,
@@ -9,7 +8,7 @@ export async function GET(
 ) {
   const { productId } = params;
   try {
-    const session = await getServerSession(authOptions);
+    const session = await Session();
     if (!session || !session.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -24,7 +23,15 @@ export async function GET(
       });
     }
     return new Response(JSON.stringify(reviews), { status: 200 });
-  } catch (error) {}
+  } catch (error) {
+    let errorMessage = "Internal Server Error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+    });
+  }
 }
 
 export async function POST(
@@ -33,7 +40,7 @@ export async function POST(
 ) {
   const { productId } = params;
   try {
-    const session = await getServerSession(authOptions);
+    const session = await Session();
     if (!session || !session.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -51,7 +58,11 @@ export async function POST(
     await newReview.save();
     return new Response(JSON.stringify(newReview), { status: 201 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+    let errorMessage = "Internal Server Error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
     });
   }

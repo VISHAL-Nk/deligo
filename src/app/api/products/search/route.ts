@@ -1,14 +1,13 @@
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
-import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { Session } from "@/lib/Session";
 
 export default async function GET(req: NextRequest) {
   try {
     const searchParams = new URL(req.url).searchParams;
     const query = searchParams.get("q") || "";
-    const session = await getServerSession(authOptions);
+    const session = await Session();
     if(!session || !session.user){
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,

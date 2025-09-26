@@ -1,8 +1,6 @@
 import { dbConnect } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import Product from "@/models/Products.models";
-import Review from "@/models/Reviews.models";
+import { Session } from "@/lib/Session";
 
 export async function GET(
   request: Request,
@@ -10,7 +8,7 @@ export async function GET(
 ) {
   const { productId } = params;
   try {
-    const session = await getServerSession(authOptions);
+    const session = await Session();
     if (!session || !session.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
