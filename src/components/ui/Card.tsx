@@ -1,7 +1,6 @@
 import React from 'react'
 
-const page = async () => {
-  
+const Card = () => {
   return (
     <div>
       
@@ -9,4 +8,4 @@ const page = async () => {
   )
 }
 
-export default page
+export default Card

@@ -1,18 +1,18 @@
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
 import { type NextRequest } from "next/server";
-import { Session } from "@/lib/Session";
+// import { Session } from "@/lib/Session";
 
 export  async function GET(req: NextRequest) {
   try {
     const searchParams = new URL(req.url).searchParams;
-    const query = searchParams.get("q") || "";
-    const session = await Session();
-    if(!session || !session.user){
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
-    }
+    const query = searchParams.get("search") || "";
+    // const session = await Session();
+    // if(!session || !session.user){
+    //   return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    //     status: 401,
+    //   });
+    // }
 
     if(!query){
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required." }), {

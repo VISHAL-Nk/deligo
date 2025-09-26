@@ -1,4 +1,3 @@
-import NextAuth from "next-auth";
 
 declare module "next-auth" {
   interface Session {
@@ -8,6 +7,7 @@ declare module "next-auth" {
       role: "customer" | "seller" | "delivery" | "support" | "admin";
       isVerified: boolean;
       hasProfile: boolean;
+      name:string | null;
     };
   }
 
