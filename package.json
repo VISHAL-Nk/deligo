@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.10.0",
+    "@gsap/react": "^2.1.2",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
+    "gsap": "^3.13.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.543.0",
     "mongodb": "^6.20.0",

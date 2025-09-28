@@ -11,7 +11,7 @@ const redis = Redis.fromEnv();
 // Configure rate limiter - 5 requests per 60 seconds
 const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.fixedWindow(5, "60 s"), // 5 requests per 60s
+  limiter: Ratelimit.fixedWindow(100, "60 s"), // 5 requests per 60s
 });
 
 export default withAuth(async function middleware(req) {

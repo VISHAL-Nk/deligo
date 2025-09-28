@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation';
 import React, { type FormEvent, useState } from 'react'
 import LogoutButton from '../Logout';
+import SplitText from '../gsap/SplitText';
 
 const Navbar = () => {
     const session = useSession();
@@ -23,7 +24,19 @@ const Navbar = () => {
         <nav className="bg-green-600 text-white px-6 py-3 shadow-md sticky top-0 z-50">
             <div className="container mx-auto flex justify-between items-center">
                 <Link href="/" className="text-2xl font-bold">
-                    Deligo
+                    <SplitText
+                        text="Deligo"
+                        className="text-2xl font-semibold text-center"
+                        delay={100}
+                        duration={0.6}
+                        ease="power3.out"
+                        splitType="chars"
+                        from={{ opacity: 0, y: 40 }}
+                        to={{ opacity: 1, y: 0 }}
+                        threshold={0.1}
+                        rootMargin="-100px"
+                        textAlign="center"  
+                    />
                 </Link>
                 <div className="hidden md:block relative w-1/2">
                     <form onSubmit={handleSearch} className="flex items-center bg-white rounded-lg px-3 py-1">
@@ -33,7 +46,7 @@ const Navbar = () => {
                             className="flex-grow px-2 py-1 outline-none text-black"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            // onFocus={() => setIsDropdownVisible(true)} // ✅ Show dropdown on focus
+                        // onFocus={() => setIsDropdownVisible(true)} // ✅ Show dropdown on focus
                         />
                         <button
                             type="submit"
