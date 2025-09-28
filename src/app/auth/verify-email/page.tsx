@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 const VerifyEmailPage = () => {
@@ -17,14 +17,7 @@ const VerifyEmailPage = () => {
     setToken(urlToken)
   }, [])
 
-  useEffect(() => {
-    // If there's a token in the URL, verify it
-    if (token && isClient) {
-      verifyEmailToken(token)
-    }
-  }, [token, isClient])
-
-  const verifyEmailToken = async (verificationToken: string) => {
+  const verifyEmailToken = useCallback(async (verificationToken: string) => {
     setVerificationStatus('pending')
     try {
       const response = await fetch(`/api/auth/verify-email?token=${verificationToken}`)
@@ -40,11 +33,18 @@ const VerifyEmailPage = () => {
         setVerificationStatus('error')
         setMessage('Invalid or expired verification link. Please request a new one.')
       }
-    } catch (error) {
+    } catch {
       setVerificationStatus('error')
       setMessage('An error occurred while verifying your email. Please try again.')
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    // If there's a token in the URL, verify it
+    if (token && isClient) {
+      verifyEmailToken(token)
+    }
+  }, [token, isClient, verifyEmailToken])
 
   // Don't render until client-side hydration is complete
   if (!isClient) {
@@ -113,7 +113,7 @@ const VerifyEmailPage = () => {
             Verify Your Email
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            We've sent a verification email to your registered email address
+            We&apos;ve sent a verification email to your registered email address
           </p>
         </div>
         <div className="bg-white shadow-md rounded-lg p-6">
@@ -128,7 +128,7 @@ const VerifyEmailPage = () => {
               Please click the verification link in the email we sent you to verify your account.
             </p>
             <p className="text-sm text-gray-500">
-              Didn't receive the email? Check your spam folder or contact support.
+              Didn&apos;t receive the email? Check your spam folder or contact support.
             </p>
           </div>
         </div>

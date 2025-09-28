@@ -4,14 +4,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import User from "@/models/User.models";
 import UserProfile from "@/models/UserProfiles.models";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "../[...nextauth]/route";
 import { profileSchema, ProfileType } from "@/schema/profileSchema";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
-    const session = await getServerSession(authOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const session = await getServerSession(authOptions as any) as any;
 
     if (!session || !session.user?.email) {
       return NextResponse.json(
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const session = await getServerSession(authOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const session = await getServerSession(authOptions as any) as any;
 
     if (!session || !session.user?.email) {
       return NextResponse.json(

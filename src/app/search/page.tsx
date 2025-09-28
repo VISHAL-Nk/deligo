@@ -2,7 +2,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Search, Filter, SortAsc, SortDesc, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -26,7 +26,7 @@ interface SearchResults {
   hasPrevPage: boolean;
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('query') || '';
   
@@ -330,5 +330,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

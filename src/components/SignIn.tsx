@@ -32,7 +32,7 @@ export const SigninPage = () => {
         router.push('/products')
         router.refresh()
       }
-    } catch (error) {
+    } catch {
       setErrors({ general: 'An error occurred during signin' })
     } finally {
       setIsLoading(false)

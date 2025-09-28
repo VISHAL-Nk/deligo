@@ -20,7 +20,8 @@ const CompleteProfilePage = () => {
   // Check if user already has profile on component mount
   useEffect(() => {
     const checkProfileStatus = async () => {
-      if (!session?.user?.id) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!session?.user || !(session.user as any).id) {
         setIsChecking(false)
         return
       }
@@ -96,11 +97,11 @@ const CompleteProfilePage = () => {
           setErrors({ general: result.error || 'Failed to update profile' })
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Profile submission error:', error)
-      if (error.errors) {
+      if (error && typeof error === 'object' && 'errors' in error && Array.isArray(error.errors)) {
         const fieldErrors: Record<string, string> = {}
-        error.errors.forEach((err: any) => {
+        error.errors.forEach((err: { path: string[]; message: string }) => {
           fieldErrors[err.path[0]] = err.message
         })
         setErrors(fieldErrors)

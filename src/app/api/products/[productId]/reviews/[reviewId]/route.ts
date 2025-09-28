@@ -2,8 +2,8 @@ import { dbConnect } from "@/lib/db";
 import { Session } from "@/lib/Session";
 import Product from "@/models/Products.models";
 
-export async function PUT(request: Request, { params }: { params: { productId: string ,reviewId:string} }) {
-    const { productId, reviewId } = params;
+export async function PUT(request: Request, { params }: { params: Promise<{ productId: string, reviewId: string }> }) {
+    const { productId, reviewId } = await params;
     try{
         const session = await Session();
         if (!session || !session.user) {

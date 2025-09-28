@@ -4,9 +4,9 @@ import { Session } from "@/lib/Session";
 
 export async function GET(
   request: Request,
-  { params }: { params: { productId: string } },
+  { params }: { params: Promise<{ productId: string }> },
 ) {
-  const { productId } = params;
+  const { productId } = await params;
   try {
     const session = await Session();
     if (!session || !session.user) {

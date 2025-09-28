@@ -27,15 +27,20 @@ export const Signup = () => {
             console.log('Signup successful:', response.data);
             // Redirect to verify email page after successful signup
             router.push('/auth/verify-email');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Signup error:', error);
-            if (error.response?.data?.error) {
-                if (typeof error.response.data.error === 'string') {
-                    setErrors({ general: error.response.data.error });
-                } else {
+            if (error && typeof error === 'object' && 'response' in error && 
+                error.response && typeof error.response === 'object' && 
+                'data' in error.response && error.response.data && 
+                typeof error.response.data === 'object' && 'error' in error.response.data) {
+                
+                const errorData = error.response.data.error;
+                if (typeof errorData === 'string') {
+                    setErrors({ general: errorData });
+                } else if (Array.isArray(errorData)) {
                     // Handle validation errors
                     const validationErrors: Record<string, string> = {};
-                    error.response.data.error.forEach((err: any) => {
+                    errorData.forEach((err: { path?: string[]; message: string }) => {
                         validationErrors[err.path?.[0] || 'general'] = err.message;
                     });
                     setErrors(validationErrors);

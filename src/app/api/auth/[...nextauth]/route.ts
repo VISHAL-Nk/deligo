@@ -1,6 +1,6 @@
 // src/app/api/auth/[...nextauth]/route.ts
 
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -9,11 +9,19 @@ import { dbConnect, dbDisconnect } from "@/lib/db";
 import User from "@/models/User.models";
 import UserProfile from "@/models/UserProfiles.models";
 import type { UserDocument } from "@/types/mongooose";
-import type { User as NextAuthUser } from "next-auth";
+import type { User as NextAuthUser, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import { loginSchema, LoginInput } from "@/schema/signInSchema";
 import { z } from "zod";
 
-export const authOptions: NextAuthOptions = {
+// Define type for account object
+type AccountType = {
+  provider: string;
+  type: string;
+  [key: string]: unknown;
+} | null;
+
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -80,11 +88,16 @@ export const authOptions: NextAuthOptions = {
   },
 
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
 
   callbacks: {
-    async jwt({ token, user, trigger, account }) {
+    async jwt({ token, user, trigger, account }: {
+      token: JWT;
+      user?: NextAuthUser;
+      trigger?: string;
+      account?: AccountType;
+    }) {
       if (user) {
         // For OAuth providers, we need to find the user by email since user.id is the provider's ID
         if (account?.provider !== "credentials") {
@@ -123,7 +136,10 @@ export const authOptions: NextAuthOptions = {
 
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: {
+      session: Session;
+      token: JWT;
+    }) {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as
@@ -137,7 +153,10 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user, account }) {
+    async signIn({ user, account }: {
+      user: NextAuthUser;
+      account?: AccountType;
+    }) {
       await dbConnect();
 
       let existingUser = await User.findOne({ email: user.email });
@@ -183,7 +202,10 @@ export const authOptions: NextAuthOptions = {
 
       return true;
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ url, baseUrl }: {
+      url: string;
+      baseUrl: string;
+    }) {
       // Handle relative URLs
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
@@ -200,7 +222,7 @@ export const authOptions: NextAuthOptions = {
         if (urlObj.pathname === "/auth/signin" && urlObj.origin === baseUrl) {
           return `${baseUrl}/products`; // Redirect to products instead
         }
-      } catch (e) {
+      } catch {
         console.warn("Invalid URL in redirect:", url);
       }
 
@@ -212,5 +234,10 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+// Workaround for NextAuth v4 typing issues in App Router
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const NextAuthHandler = NextAuth as any;
+const handler = NextAuthHandler(authOptions);
+
+export const GET = handler;
+export const POST = handler;

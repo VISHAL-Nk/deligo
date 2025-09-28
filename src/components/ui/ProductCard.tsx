@@ -30,11 +30,13 @@ interface Product {
 
 const ProductCard = ({ product }: { product: Product }) => {
   const qty = 0;
-  const updateQuantity = (p: string, t: number) => {
-    // your logic
+  const updateQuantity = (productId: string, quantity: number) => {
+    // TODO: Implement cart quantity update logic
+    console.log('Update quantity:', productId, quantity);
   };
-  const addToCart = (p: Product) => {
-    // your logic
+  const addToCart = (product: Product) => {
+    // TODO: Implement add to cart logic
+    console.log('Add to cart:', product);
   };
 
   return (

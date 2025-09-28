@@ -6,6 +6,9 @@ import Link from "next/link";
 import React from "react";
 import Carousel, { type CarouselItem } from '@/components/reactBit/Corousel';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 interface Product {
   _id: string;
   sellerId: string;
@@ -302,7 +305,7 @@ async function ProductsList() {
       .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
       .join("; ");
 
-    const response = await axios.get(url, {
+    await axios.get(url, {
       headers: { Cookie: cookieHeader },
     });
 

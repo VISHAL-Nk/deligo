@@ -129,7 +129,7 @@ export function LogoutMenuItem() {
 }
 
 // Demo component showing different variations
-function LogoutButtonDemo() {
+export function LogoutButtonDemo() {
   return (
     <div className="p-8 space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Logout Button Variations</h2>

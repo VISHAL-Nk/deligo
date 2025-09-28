@@ -1,4 +1,3 @@
-import User from "@/models/User.models";
 import {z} from "zod";
 
 const genders = ["Male", "Female", "Other", "Prefer not to say"] as const;

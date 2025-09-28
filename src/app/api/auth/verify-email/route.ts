@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         headers: { "Content-Type": "application/json" },
       },
     );
-  } catch (error) {
+  } catch {
     return new Response(JSON.stringify({ error: "Verification failed" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

@@ -52,10 +52,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
-    let errorMessage = "An unknown error occurred.";
-
     if (error instanceof Error) {
-      errorMessage = error.message;
       console.error("Signup Route Error:", error.message, {
         stack: error.stack,
       });

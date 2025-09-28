@@ -1,7 +1,8 @@
-'use client';
-import { useEffect, useState, useRef } from 'react';
-import { motion, PanInfo, useMotionValue, useTransform, type MotionValue, type Transition } from 'motion/react';
-import React, { JSX } from 'react';
+'use client'
+
+import React, { useRef, useEffect, useState } from 'react'
+import { motion, useMotionValue, useTransform, type MotionValue, type Transition, type PanInfo } from 'framer-motion'
+import Image from 'next/image'
 
 export interface CarouselItem {
   id: number;
@@ -49,7 +50,7 @@ function CarouselCard({
       style={{ width: itemWidth, height: itemWidth * 0.25, rotateY }}
       transition={effectiveTransition}
     >
-      <img src={item.image} alt={`carousel-${item.id}`} className="w-full h-full object-cover" />
+      <Image src={item.image} alt={`carousel-${item.id}`} className="w-full h-full object-cover" fill />
     </motion.div>
   );
 }
@@ -60,7 +61,7 @@ export default function Carousel({
   autoplayDelay = 3000,
   pauseOnHover = false,
   loop = false
-}: CarouselProps): JSX.Element {
+}: CarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const x: MotionValue<number> = useMotionValue(0);

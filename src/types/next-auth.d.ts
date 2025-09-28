@@ -7,7 +7,8 @@ declare module "next-auth" {
       role: "customer" | "seller" | "delivery" | "support" | "admin";
       isVerified: boolean;
       hasProfile: boolean;
-      name:string | null;
+      name: string | null;
+      image?: string | null;
     };
   }
 
@@ -17,6 +18,8 @@ declare module "next-auth" {
     role: "customer" | "seller" | "delivery" | "support" | "admin";
     isVerified: boolean;
     hasProfile: boolean;
+    name?: string | null;
+    image?: string | null;
   }
 }
 
