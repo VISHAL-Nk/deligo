@@ -1,3 +1,4 @@
+// src/app/api/products/route.ts
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
 import { Session } from "@/lib/Session";

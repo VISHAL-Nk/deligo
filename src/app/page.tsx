@@ -4,6 +4,7 @@ import axios from "axios";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import React from "react";
+import Carousel, { type CarouselItem } from '@/components/reactBit/Corousel';
 
 interface Product {
   _id: string;
@@ -28,6 +29,12 @@ interface Product {
   createdAt: string;
   updatedAt: string;
 }
+const images: CarouselItem[] = [
+  { id: 1, image: 'https://picsum.photos/400/300?random=1' },
+  { id: 2, image: 'https://picsum.photos/400/300?random=2' },
+  { id: 3, image: 'https://picsum.photos/400/300?random=3' },
+  { id: 4, image: 'https://picsum.photos/400/300?random=4' },
+];
 
 // 🔹 Skeleton grid for suspense fallback
 const ProductsSkeleton = () => {
@@ -53,7 +60,7 @@ const ProductsSkeleton = () => {
 
 // 🔹 Separate component for fetching + rendering products
 async function ProductsList() {
-    const products = [
+  const products = [
     {
       _id: '68d66156422d71b9d3939549',
       sellerId: '68d66156422d71b9d3939546',
@@ -285,7 +292,7 @@ async function ProductsList() {
       updatedAt: '2025-09-26T09:48:06.528Z'
     },
   ];
-  
+
   try {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/products`;
 
@@ -315,7 +322,7 @@ async function ProductsList() {
 }
 
 const Page = () => {
-  
+
   const navigationLinks = [
     { name: "Home", href: "/" },
     { name: "Category", href: "/category" },
@@ -336,6 +343,17 @@ const Page = () => {
           </Link>
         ))}
       </div>
+      <div className="my-4 px-4">
+        <Carousel
+          items={images}         // pass your images array
+          autoplay={true}        // auto-scroll
+          autoplayDelay={3000}   // 3 seconds delay
+          pauseOnHover={true}    // pause autoplay on hover
+          loop={true}            // infinite loop
+          round={false}          // circular card style
+        />
+      </div>
+
 
       {/* 🔹 Suspense applied here */}
       <Suspense fallback={<ProductsSkeleton />}>
