@@ -423,13 +423,13 @@ const Navbar = () => {
                     ) : (
                         <div className="flex items-center gap-2">
                             <Link 
-                                href="/auth/login" 
+                                href="/auth/signin" 
                                 className="px-3 py-2 text-sm font-medium hover:bg-green-700 rounded-lg transition-colors"
                             >
                                 Login
                             </Link>
                             <Link 
-                                href="/auth/register" 
+                                href="/auth/signup" 
                                 className="px-3 py-2 bg-green-700 hover:bg-green-800 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Register
