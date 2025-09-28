@@ -1,11 +1,10 @@
-// src/app/page.tsx
+import { Suspense } from "react";
+import ProductCard from "@/components/ui/ProductCard";
+import axios from "axios";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import React from "react";
 
-import ProductCard from '@/components/ui/ProductCard';
-import axios from 'axios';
-import { cookies } from 'next/headers';
-import Link from 'next/link';
-import React from 'react';
-  
 interface Product {
   _id: string;
   sellerId: string;
@@ -30,8 +29,31 @@ interface Product {
   updatedAt: string;
 }
 
-const Page = async () => {
-  const products = [
+// 🔹 Skeleton grid for suspense fallback
+const ProductsSkeleton = () => {
+  return (
+    <div className="p-4 flex gap-2 w-full overflow-scroll overflow-y-hidden">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="border rounded-xl shadow-sm p-3 bg-white flex flex-col min-w-48 animate-pulse"
+        >
+          <div className="bg-gray-200 h-48 w-full rounded-md"></div>
+          <div className="mt-3 h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="mt-2 h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="mt-4 flex justify-between items-center">
+            <div className="h-4 bg-gray-200 rounded w-12"></div>
+            <div className="h-6 bg-gray-200 rounded w-16"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// 🔹 Separate component for fetching + rendering products
+async function ProductsList() {
+    const products = [
     {
       _id: '68d66156422d71b9d3939549',
       sellerId: '68d66156422d71b9d3939546',
@@ -263,49 +285,63 @@ const Page = async () => {
       updatedAt: '2025-09-26T09:48:06.528Z'
     },
   ];
-
+  
   try {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/products`;
 
-    // FIX 1: Add 'await' to resolve the promise
     const cookieStore = await cookies();
-
-    // FIX 2: Add the type for the 'c' parameter
     const cookieHeader = cookieStore
       .getAll()
       .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
-      .join('; ');
+      .join("; ");
 
     const response = await axios.get(url, {
       headers: { Cookie: cookieHeader },
     });
-    console.log('Products fetched successfully:', response.data, 'products found');
+
     // products = response.data;
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
   }
-  const navigationLinks=[
-    { name: 'Home', href: '/' },
-    { name: 'Category', href: '/category' },
-    { name: 'Cart', href: '/cart' },
-    { name: 'Profile', href: '/profile' },
+
+  return (
+    <div className="p-4 flex gap-2 w-full overflow-scroll overflow-y-hidden">
+      {Array.isArray(products) &&
+        products.map((product: Product) => (
+          <ProductCard key={product._id} product={product} />
+        ))}
+    </div>
+  );
+}
+
+const Page = () => {
+  
+  const navigationLinks = [
+    { name: "Home", href: "/" },
+    { name: "Category", href: "/category" },
+    { name: "Cart", href: "/cart" },
+    { name: "Profile", href: "/profile" },
   ];
-  return(
+
+  return (
     <>
-      <div className='bg-green-500 p-4 gap-5 text-white flex items-center'>
+      <div className="bg-green-500 p-4 gap-5 text-white flex items-center">
         {navigationLinks.map((link) => (
-          <Link key={link.name} href={link.href} className="py-1 px-3 bg-green-600 rounded-2xl">
+          <Link
+            key={link.name}
+            href={link.href}
+            className="py-1 px-3 bg-green-600 rounded-2xl"
+          >
             {link.name}
           </Link>
         ))}
       </div>
-      <div className="p-4 flex gap-2 w-full overflow-scroll overflow-y-hidden">
-        {/* This will now work correctly because ProductCard is typed */}
-        {Array.isArray(products) &&
-          products.map((product: Product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-      </div>
+
+      {/* 🔹 Suspense applied here */}
+      <Suspense fallback={<ProductsSkeleton />}>
+        {/* Async data-fetching section */}
+        <ProductsList />
+      </Suspense>
     </>
   );
 };
