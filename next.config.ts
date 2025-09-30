@@ -6,7 +6,13 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'media.istockphoto.com',
         port: '',
-        pathname: '/**', // Allows any path from this domain
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
