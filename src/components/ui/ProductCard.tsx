@@ -41,21 +41,27 @@ const ProductCard = ({ product }: { product: Product }) => {
 
   return (
     <div className="border rounded-xl shadow-sm p-3 bg-white flex flex-col min-w-48 ">
-      <Image
-        src={product.images[0] || '/placeholder.png'}
-        width={200}
-        height={200}
-        priority
-        alt={product.name}
-      />
-      <h3 className="text-sm font-semibold line-clamp-2">{product.name}</h3>
-      <div className="flex justify-between items-center mt-3">
-        <span className="font-bold">₹{product.price}</span>
+      <div className="w-full h-48 mb-3 overflow-hidden rounded-lg">
+        <Image
+          src={product.images[0] || '/placeholder.png'}
+          width={200}
+          height={200}
+          priority
+          alt={product.name}
+          className="w-full h-full object-cover"
+        />
+      </div>
+           <h3 className="text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
+
+      <div className="flex justify-between items-center mt-auto">
+        <div className="flex flex-col">
+          <span className="font-bold text-green-600">₹{product.price}</span>
         {product.discount > 0 && (
           <span className="text-xs text-gray-500 line-through">
             ₹{product.price + product.discount}
           </span>
         )}
+        </div>
 
         {qty === 0 ? (
           <button
