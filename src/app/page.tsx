@@ -3,6 +3,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import axios from "axios";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import Image from "next/image";
 import React from "react";
 import {
   Shirt,
@@ -12,7 +13,6 @@ import {
   Sparkles,
   Trophy,
   ChevronRight,
-  Star,
   ArrowRight
 } from "lucide-react";
 
@@ -371,9 +371,11 @@ const HeroSection = () => {
             </Link>
           </div>
           <div className={`${heroConfig.image.position === 'right' ? 'order-2' : 'order-1'} flex justify-center`}>
-            <img
+            <Image
               src={heroConfig.image.src}
               alt={heroConfig.image.alt}
+              width={400}
+              height={400}
               className="w-full max-w-md rounded-lg shadow-lg"
             />
           </div>
@@ -469,7 +471,7 @@ const LimitedTimeOffers = () => {
                 Limited Time Offers
               </h2>
               <p className="text-green-100 text-lg mb-6">
-                Hurry up! Grab these exclusive discounts before they're gone.
+                Hurry up! Grab these exclusive discounts before they&apos;re gone.
               </p>
               <Link
                 href="/products?offers=true"
@@ -485,9 +487,11 @@ const LimitedTimeOffers = () => {
               {offers.map((offer) => (
                 <div key={offer.id} className="flex-shrink-0 bg-white rounded-lg p-4 min-w-48">
                   <div className="relative mb-4">
-                    <img
+                    <Image
                       src={offer.image}
                       alt={offer.name}
+                      width={192}
+                      height={128}
                       className="w-full h-32 object-cover rounded-lg"
                     />
                     <span className="absolute -top-2 -right-2 bg-red-500 text-black text-xs font-bold px-2 py-1 rounded shadow-md">
