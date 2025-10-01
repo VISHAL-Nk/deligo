@@ -89,7 +89,7 @@ const Footer: React.FC = () => {
 
       {/* Bottom Bar */}
       <div className="bg-gray-200 text-center py-3 text-sm text-gray-600">
-        © {new Date().getFullYear()} Blinkit Clone. All rights reserved.
+        © {new Date().getFullYear()} Deligo. All rights reserved.
       </div>
     </footer>
   );
