@@ -65,36 +65,36 @@ export default function RoleSimulatorBanner() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-md">
-      <div className="rounded-lg border-2 border-green-500 bg-white p-4 shadow-2xl">
-        <div className="flex items-start gap-3">
+    <div className="fixed bottom-4 right-4 z-50 max-w-sm sm:bottom-6 sm:right-6 sm:max-w-md">
+      <div className="rounded-lg border-2 border-green-500 bg-white p-3 shadow-2xl sm:p-4">
+        <div className="flex items-start gap-2 sm:gap-3">
           {/* Icon */}
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
-            <ShieldCheck className="h-5 w-5 text-green-600" />
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:h-10 sm:w-10">
+            <ShieldCheck className="h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
           </div>
 
           {/* Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xs font-semibold text-gray-900 sm:text-sm">
                   Role Simulation Active
                 </h3>
                 <p className="mt-1 text-xs text-gray-600">
-                  You&apos;re testing as{" "}
+                  Testing as{" "}
                   <span className="font-medium capitalize text-green-600">
                     {currentRole}
                   </span>
                 </p>
-                <p className="mt-0.5 text-xs text-gray-500">
-                  Original role: {originalRole}
+                <p className="mt-0.5 text-xs text-gray-500 hidden sm:block">
+                  Original: {originalRole}
                 </p>
               </div>
               
               {/* Hide button */}
               <button
                 onClick={() => setIsHidden(true)}
-                className="ml-2 text-gray-400 hover:text-gray-600"
+                className="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-600"
                 title="Hide banner"
               >
                 <X className="h-4 w-4" />
@@ -102,22 +102,23 @@ export default function RoleSimulatorBanner() {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-3 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2 sm:mt-3">
               <button
                 onClick={handleBackToAdmin}
-                className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
+                className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-white px-2.5 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50 sm:px-3"
               >
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Admin Panel
+                <ShieldCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">Admin Panel</span>
+                <span className="sm:hidden">Admin</span>
               </button>
               
               <button
                 onClick={handleRestoreRole}
                 disabled={isRestoring}
-                className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 sm:px-3"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
-                {isRestoring ? "Restoring..." : "End Simulation"}
+                <RotateCcw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                {isRestoring ? "Restoring..." : "End"}
               </button>
             </div>
           </div>
