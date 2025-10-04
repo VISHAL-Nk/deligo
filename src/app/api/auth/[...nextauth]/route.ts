@@ -131,6 +131,7 @@ export const authOptions = {
           token.isVerified = dbUser.isVerified;
           token.role = dbUser.role;
           token.hasProfile = dbUser.hasProfile;
+          token.originalRole = dbUser.originalRole;
         }
       }
 
@@ -150,6 +151,7 @@ export const authOptions = {
           | "admin";
         session.user.isVerified = token.isVerified as boolean;
         session.user.hasProfile = token.hasProfile as boolean;
+        session.user.originalRole = token.originalRole as string | undefined;
       }
       return session;
     },

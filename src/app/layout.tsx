@@ -5,6 +5,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/Footer";
+import RoleSimulatorBanner from "@/components/admin/RoleSimulatorBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
           <Navbar />
           {children}
           <Footer />
+          <RoleSimulatorBanner />
         </Providers>
       </body>
     </html>
