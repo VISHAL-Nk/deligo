@@ -9,9 +9,12 @@ export async function POST(req: NextRequest) {
   try {
     const session = await Session();
     
-    if (!session || session.user.role !== "admin") {
+    // Check if user is admin - either current role or original role
+    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+    
+    if (!session || !isAdmin) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized - Admin access required" },
         { status: 401 }
       );
     }
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { role } = body;
 
-    if (!role || !["customer", "seller", "delivery", "admin"].includes(role)) {
+    if (!role || !["customer", "seller", "delivery", "support", "admin"].includes(role)) {
       return NextResponse.json(
         { error: "Invalid role" },
         { status: 400 }
@@ -36,8 +39,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Store original role if not already stored
-    if (!user.originalRole) {
+    // Store original role if not already stored (and if current role is admin)
+    if (!user.originalRole && user.role === "admin") {
       user.originalRole = user.role;
     }
 
@@ -48,6 +51,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: `Switched to ${role} role`,
       role,
+      originalRole: user.originalRole,
     });
   } catch (error) {
     console.error("Error switching role:", error);

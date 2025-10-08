@@ -9,7 +9,10 @@ export async function GET(req: NextRequest) {
   try {
     const session = await Session();
     
-    if (!session || session.user.role !== "admin") {
+    // Check if user is admin - either current role or original role (for role simulation)
+    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+
+    if (!session || !isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -45,7 +48,10 @@ export async function PATCH(req: NextRequest) {
   try {
     const session = await Session();
     
-    if (!session || session.user.role !== "admin") {
+    // Check if user is admin - either current role or original role (for role simulation)
+    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+
+    if (!session || !isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
