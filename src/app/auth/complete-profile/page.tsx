@@ -34,9 +34,9 @@ const CompleteProfilePage = () => {
         if (response.ok) {
           const data = await response.json()
           if (data.hasProfile) {
-            // User already has profile, redirect to products or callback URL
+            // User already has profile, redirect to home or callback URL
             const urlParams = new URLSearchParams(window.location.search)
-            const callbackUrl = urlParams.get('callbackUrl') || '/products'
+            const callbackUrl = urlParams.get('callbackUrl') || '/'
             router.replace(callbackUrl)
             return
           }
@@ -83,7 +83,7 @@ const CompleteProfilePage = () => {
         } else {
           // Fallback: Get callback URL from query params if available
           const urlParams = new URLSearchParams(window.location.search)
-          const callbackUrl = urlParams.get('callbackUrl') || '/products'
+          const callbackUrl = urlParams.get('callbackUrl') || '/'
           console.log('Redirecting to callback:', callbackUrl)
           router.push(callbackUrl)
         }

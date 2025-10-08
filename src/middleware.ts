@@ -67,7 +67,7 @@ export default withAuth(async function middleware(req) {
       return cleanCallback;
     }
     // Check hasProfile from JWT token instead of database
-    return user.hasProfile ? "/products" : "/auth/complete-profile";
+    return user.hasProfile ? "/" : "/auth/complete-profile";
   };
 
   // Handle auth pages when user is already authenticated
@@ -102,7 +102,7 @@ export default withAuth(async function middleware(req) {
     
     if (hasProfile) {
       const cleanCallback = getCleanCallbackUrl(callbackUrl);
-      const destination = cleanCallback || "/products";
+      const destination = cleanCallback || "/";
       console.log("User has profile, redirecting to:", destination);
       return NextResponse.redirect(new URL(destination, req.url));
     }
@@ -111,12 +111,10 @@ export default withAuth(async function middleware(req) {
     return NextResponse.next();
   }
 
-  // Handle protected routes - ensure user is verified and has profile
-  if (pathname.startsWith("/products") || 
-      pathname.startsWith("/admin") || 
-      pathname.startsWith("/seller") || 
-      pathname.startsWith("/support") || 
-      pathname.startsWith("/delivery")) {
+  // Handle protected routes - only cart and checkout require authentication
+  if (pathname.startsWith("/cart") || 
+      pathname.startsWith("/checkout") || 
+      pathname.startsWith("/orders")) {
     
     console.log("Protected route access - user verification:", user?.isVerified);
     
@@ -140,24 +138,45 @@ export default withAuth(async function middleware(req) {
     }
   }
 
+  // Role-specific dashboards require authentication and verification
+  if (pathname.startsWith("/admin") || 
+      pathname.startsWith("/seller") || 
+      pathname.startsWith("/support") || 
+      pathname.startsWith("/delivery")) {
+    
+    if (!user?.isVerified) {
+      const verifyUrl = new URL("/auth/verify-email", req.url);
+      verifyUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(verifyUrl);
+    }
+    
+    const hasProfile = user.hasProfile || false;
+    
+    if (!hasProfile) {
+      const profileUrl = new URL("/auth/complete-profile", req.url);
+      profileUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(profileUrl);
+    }
+  }
+
   // RBAC (Role-Based Access Control) checks
   // Allow access to admin if user is admin OR has originalRole (role simulator)
   const isRoleSimulating = user?.originalRole !== undefined;
   const isActualAdmin = user?.role === "admin" || user?.originalRole === "admin";
   
   if (!isActualAdmin && pathname.startsWith("/admin")) {
-    return NextResponse.redirect(new URL("/products", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
   
   // For other role-specific routes, check current role (allow role simulation)
   if (user?.role !== "seller" && !isRoleSimulating && pathname.startsWith("/seller")) {
-    return NextResponse.redirect(new URL("/products", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
   if (user?.role !== "support" && !isRoleSimulating && pathname.startsWith("/support")) {
-    return NextResponse.redirect(new URL("/products", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
   if (user?.role !== "delivery" && !isRoleSimulating && pathname.startsWith("/delivery")) {
-    return NextResponse.redirect(new URL("/products", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // Allow the request to proceed
@@ -173,7 +192,9 @@ export default withAuth(async function middleware(req) {
       }
       
       // For protected routes, require a token
-      if (pathname.startsWith("/products") || 
+      if (pathname.startsWith("/cart") || 
+          pathname.startsWith("/checkout") ||
+          pathname.startsWith("/orders") ||
           pathname.startsWith("/admin") || 
           pathname.startsWith("/seller") || 
           pathname.startsWith("/support") || 
@@ -181,7 +202,7 @@ export default withAuth(async function middleware(req) {
         return !!token;
       }
       
-      // For public routes (like homepage), allow access without token
+      // For public routes (like homepage, products, search), allow access without token
       return true;
     },
   },
@@ -190,7 +211,9 @@ export default withAuth(async function middleware(req) {
 // Apply middleware to protected routes, auth pages, and API routes
 export const config = {
   matcher: [
-    "/products/:path*",
+    "/cart/:path*",
+    "/checkout/:path*",
+    "/orders/:path*",
     "/admin/:path*",
     "/seller/:path*",
     "/support/:path*",

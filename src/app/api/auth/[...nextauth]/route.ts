@@ -222,7 +222,7 @@ export const authOptions = {
       try {
         const urlObj = new URL(url);
         if (urlObj.pathname === "/auth/signin" && urlObj.origin === baseUrl) {
-          return `${baseUrl}/products`; // Redirect to products instead
+          return `${baseUrl}/`; // Redirect to home page instead
         }
       } catch {
         console.warn("Invalid URL in redirect:", url);

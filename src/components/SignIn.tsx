@@ -28,8 +28,8 @@ export const SigninPage = () => {
       if (result?.error) {
         setErrors({ general: result.error })
       } else {
-        // Let middleware handle the redirect based on user state
-        router.push('/products')
+        // Redirect to home page after successful login
+        router.push('/')
         router.refresh()
       }
     } catch {
