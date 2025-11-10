@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { ArrowLeft, CreditCard, Wallet, Building2, ShoppingBag } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface CheckoutItem {
   id: string;
@@ -52,8 +53,7 @@ function CheckoutContent() {
           })
           .catch(error => {
             console.error('Error fetching product:', error);
-            // Fallback to showing error or redirect
-            alert('Product not found');
+            toast.error('Product not found');
             router.push('/');
           });
       } else {
@@ -89,16 +89,35 @@ function CheckoutContent() {
   const handlePayment = async () => {
     setProcessingPayment(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      // Show success alert
-      alert('🎉 Payment Successful! Your order has been placed.');
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Remove items from cart (in production, call API)
-      // For now, just redirect to home
+      // Clear the cart after successful payment
+      const response = await fetch('/api/cart', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Dispatch event to update cart count in navbar
+        window.dispatchEvent(new Event('cartUpdated'));
+        
+        // Show success message
+        toast.success('🎉 Payment Successful! Your order has been placed.');
+        
+        // Redirect to home after a short delay
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+      } else {
+        toast.error('Payment successful but failed to clear cart. Please refresh the page.');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Payment failed. Please try again.');
+    } finally {
       setProcessingPayment(false);
-      router.push('/');
-    }, 2000);
+    }
   };
 
   if (loading || status === 'loading') {

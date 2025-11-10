@@ -6,6 +6,8 @@ import Providers from "@/components/Providers";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/Footer";
 import RoleSimulatorBanner from "@/components/admin/RoleSimulatorBanner";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,12 +34,38 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <Navbar />
-          {children}
-          <Footer />
-          <RoleSimulatorBanner />
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: '#333',
+                  color: '#fff',
+                },
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  duration: 4000,
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+            <Navbar />
+            {children}
+            <Footer />
+            <RoleSimulatorBanner />
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

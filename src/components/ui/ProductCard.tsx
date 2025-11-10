@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 // Your Product interface here...
 interface Product {
@@ -73,9 +74,11 @@ const ProductCard = ({ product }: { product: Product }) => {
     try {
       await updateCartAPI(productId, newQty);
       setQty(newQty);
+      // Trigger cart count refresh
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Failed to update cart:', error);
-      alert('Failed to update cart. Please try again.');
+      toast.error('Failed to update cart. Please try again.');
     }
   };
 
@@ -89,16 +92,41 @@ const ProductCard = ({ product }: { product: Product }) => {
     try {
       await updateCartAPI(product._id, 1);
       setQty(1);
+      // Trigger cart count refresh
+      window.dispatchEvent(new Event('cartUpdated'));
+      toast.success('Added to cart!');
     } catch (error) {
       console.error('Failed to add to cart:', error);
-      alert('Failed to add to cart. Please try again.');
+      toast.error('Failed to add to cart. Please try again.');
     }
   };
 
   const finalPrice = product.price - product.discount;
+  const discountPercentage = product.discount > 0 ? Math.round((product.discount / product.price) * 100) : 0;
+  const isOutOfStock = product.stock <= 0;
+  const isLowStock = product.stock > 0 && product.stock <= 5;
 
   return (
-    <div className="border rounded-xl shadow-sm p-3 bg-white flex flex-col min-w-48 hover:shadow-md transition-shadow">
+    <div className="border rounded-xl shadow-sm p-3 bg-white flex flex-col min-w-48 hover:shadow-md transition-shadow relative">
+      {/* Discount Badge */}
+      {discountPercentage > 0 && (
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+          {discountPercentage}% OFF
+        </div>
+      )}
+      
+      {/* Stock Badge */}
+      {isOutOfStock && (
+        <div className="absolute top-2 right-2 bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+          Out of Stock
+        </div>
+      )}
+      {isLowStock && (
+        <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+          Only {product.stock} left
+        </div>
+      )}
+      
       <Link href={`/products/${product._id}`} className="w-full h-48 mb-3 overflow-hidden rounded-lg cursor-pointer">
         <Image
           src={product.images[0] || '/placeholder.png'}
@@ -106,7 +134,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           height={200}
           priority
           alt={product.name}
-          className="w-full h-full object-cover hover:scale-105 transition-transform"
+          className={`w-full h-full object-cover hover:scale-105 transition-transform ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
         />
       </Link>
       
@@ -127,10 +155,10 @@ const ProductCard = ({ product }: { product: Product }) => {
         {qty === 0 ? (
           <button
             onClick={() => addToCart(product)}
-            disabled={loading}
+            disabled={loading || isOutOfStock}
             className="bg-green-600 text-white text-sm px-3 py-1 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Adding...' : 'ADD'}
+            {loading ? 'Adding...' : isOutOfStock ? 'Unavailable' : 'ADD'}
           </button>
         ) : (
           <div className="flex items-center gap-2 bg-green-50 border border-green-600 rounded-md px-2 py-1">
@@ -144,8 +172,9 @@ const ProductCard = ({ product }: { product: Product }) => {
             <span className="text-sm font-semibold min-w-[20px] text-center">{qty}</span>
             <button
               onClick={() => updateQuantity(product._id, 1)}
-              disabled={loading}
+              disabled={loading || qty >= product.stock}
               className="text-green-600 font-bold text-lg px-1 hover:text-green-700 disabled:opacity-50"
+              title={qty >= product.stock ? 'Max stock reached' : 'Add one more'}
             >
               +
             </button>

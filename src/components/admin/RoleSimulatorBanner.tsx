@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck, RotateCcw, X } from "lucide-react";
 import { useState } from "react";
 import type { Session } from "next-auth";
+import toast from "react-hot-toast";
 
 interface ExtendedSession extends Session {
   user: {
@@ -50,11 +51,11 @@ export default function RoleSimulatorBanner() {
         await update();
         router.push("/admin");
       } else {
-        alert(data.error || "Failed to restore role");
+        toast.error(data.error || "Failed to restore role");
       }
     } catch (error) {
       console.error("Error restoring role:", error);
-      alert("Failed to restore role");
+      toast.error("Failed to restore role");
     } finally {
       setIsRestoring(false);
     }

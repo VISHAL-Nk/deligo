@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ProductReviews from '@/components/ProductReviews';
+import toast from 'react-hot-toast';
 
 interface Product {
   _id: string;
@@ -76,14 +77,16 @@ const ProductDetailPage = () => {
       });
 
       if (response.ok) {
-        alert(`Added ${quantity} item(s) to cart!`);
+        toast.success(`Added ${quantity} item(s) to cart!`);
+        // Trigger cart count refresh
+        window.dispatchEvent(new Event('cartUpdated'));
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to add to cart');
+        toast.error(error.error || 'Failed to add to cart');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add to cart. Please try again.');
+      toast.error('Failed to add to cart. Please try again.');
     }
   };
 

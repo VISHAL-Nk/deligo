@@ -14,13 +14,25 @@ export async function GET() {
     await dbConnect();
 
     // Fetch cart for the authenticated user and populate product details
-    const cart = await Cart.findOne({ userId: session.user.id }).populate('items.productId').lean();
+    const cart = await Cart.findOne({ userId: session.user.id })
+      .populate({
+        path: 'items.productId',
+        select: '_id name images price discount stock status'
+      })
+      .lean() as { items?: { productId: { status?: string; _id: unknown; name: string; images: string[]; price: number; discount: number; stock: number } | null; quantity: number }[] } | null;
     
     if (!cart) {
       return new Response(JSON.stringify({ items: [] }), { status: 200 });
     }
 
-    return new Response(JSON.stringify(cart), { status: 200 });
+    // Filter out items where productId is null or product is inactive
+    const validItems = cart.items?.filter((item: { productId: { status?: string } | null }) => {
+      return item.productId !== null && 
+             item.productId !== undefined &&
+             (!item.productId.status || item.productId.status === 'active');
+    }) || [];
+
+    return new Response(JSON.stringify({ ...cart, items: validItems }), { status: 200 });
   } catch (error) {
     let message = "Internal Server Error";
     if (error instanceof Error) message = error.message;
@@ -78,6 +90,35 @@ export async function POST(request: Request) {
     await cart.save();
 
     return new Response(JSON.stringify({ message: "Cart updated", cart }), { status: 200 });
+  } catch (error) {
+    let message = "Internal Server Error";
+    if (error instanceof Error) message = error.message;
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
+  }
+}
+
+// DELETE - Clear entire cart
+export async function DELETE() {
+  try {
+    const session = await Session();
+
+    if (!session?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
+    await dbConnect();
+
+    // Find and clear the cart
+    const cart = await Cart.findOne({ userId: session.user.id });
+
+    if (!cart) {
+      return new Response(JSON.stringify({ message: "Cart is already empty" }), { status: 200 });
+    }
+
+    cart.items = [];
+    await cart.save();
+
+    return new Response(JSON.stringify({ message: "Cart cleared successfully" }), { status: 200 });
   } catch (error) {
     let message = "Internal Server Error";
     if (error instanceof Error) message = error.message;

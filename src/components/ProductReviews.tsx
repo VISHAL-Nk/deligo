@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 interface Review {
   _id: string;
@@ -32,7 +33,6 @@ export default function ProductReviews({ productId }: { productId: string }) {
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
-  const [submitting, setSubmitting] = useState(false);
 
   const fetchReviews = async () => {
     try {
@@ -53,23 +53,19 @@ export default function ProductReviews({ productId }: { productId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+    const handleSubmitReview = async () => {
     if (!session) {
-      router.push('/auth/signin?callbackUrl=' + window.location.pathname);
+      router.push('/auth/signin?callbackUrl=/products/' + productId);
       return;
     }
 
     if (!newReview.comment.trim()) {
-      alert('Please write a comment');
+      toast.error('Please write a comment');
       return;
     }
 
-    setSubmitting(true);
-
     try {
-      const response = await fetch('/api/reviews', {
+      const response = await fetch(`/api/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,24 +73,22 @@ export default function ProductReviews({ productId }: { productId: string }) {
         body: JSON.stringify({
           productId,
           rating: newReview.rating,
-          comment: newReview.comment,
-        }),
+          comment: newReview.comment
+        })
       });
 
       if (response.ok) {
-        setShowReviewForm(false);
         setNewReview({ rating: 5, comment: '' });
+        setShowReviewForm(false);
         fetchReviews();
-        alert('Review submitted successfully!');
+        toast.success('Review submitted successfully!');
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to submit review');
+        toast.error(error.error || 'Failed to submit review');
       }
     } catch (error) {
-      console.error('Failed to submit review:', error);
-      alert('Failed to submit review');
-    } finally {
-      setSubmitting(false);
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review');
     }
   };
 
@@ -176,18 +170,18 @@ export default function ProductReviews({ productId }: { productId: string }) {
             />
           </div>
 
-          <div className="flex gap-3">
+                    <div className="flex gap-3">
             <button
-              type="submit"
-              disabled={submitting}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+              onClick={handleSubmitReview}
+              type="button"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors"
             >
-              {submitting ? 'Submitting...' : 'Submit Review'}
+              Submit Review
             </button>
             <button
               type="button"
               onClick={() => setShowReviewForm(false)}
-              className="border-2 border-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>

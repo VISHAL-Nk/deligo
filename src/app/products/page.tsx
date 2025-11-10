@@ -5,9 +5,19 @@ import Category from '@/models/ProductCategories.models';
 import Product from '@/models/Products.models';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import { Metadata } from 'next';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Products - Browse All Categories | Deligo',
+  description: 'Browse products across all categories - electronics, fashion, books, home & kitchen, and more. Great deals and fast delivery.',
+  openGraph: {
+    title: 'Products - Browse All Categories',
+    description: 'Browse products across all categories with great deals and fast delivery',
+  }
+};
 
 interface ProductType {
   _id: string;

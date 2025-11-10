@@ -8,15 +8,13 @@ export async function GET(
 ) {
   const { productId } = await params;
   try {
-    const session = await Session();
-    if (!session || !session.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
-    }
+    // ✅ No authentication required for viewing reviews - public endpoint
     await dbConnect();
     
-    const reviews = await Review.find({ product: productId });
+    const reviews = await Review.find({ product: productId })
+      .populate('user', 'fullName email') // Include user info
+      .lean();
+      
     if(!reviews){
       return new Response(JSON.stringify({ error: "No reviews found" }), {
         status: 404,

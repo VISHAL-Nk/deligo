@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { Trash2, Ban, CheckCircle, MoreVertical } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface User {
   _id: string;
@@ -37,7 +38,7 @@ export default function UserTable({ users, onRefresh }: UserTableProps) {
         });
         const data = await response.json();
         if (data.success) {
-          alert("User deleted successfully");
+          toast.success("User deleted successfully");
           onRefresh();
         }
       } else {
@@ -48,13 +49,13 @@ export default function UserTable({ users, onRefresh }: UserTableProps) {
         });
         const data = await response.json();
         if (data.success) {
-          alert(data.message);
+          toast.success(data.message);
           onRefresh();
         }
       }
     } catch (error) {
       console.error("Error performing action:", error);
-      alert("Failed to perform action");
+      toast.error("Failed to perform action");
     } finally {
       setLoading(null);
     }
