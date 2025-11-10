@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import ProductCard from "@/components/ui/ProductCard";
-import axios from "axios";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import Image from "next/image";
@@ -88,241 +87,11 @@ const ProductsSkeleton = () => {
 
 // 🔹 Separate component for fetching + rendering products
 async function ProductsList() {
-  const products = [
-    {
-      _id: '68d66156422d71b9d3939549',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939542',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939541',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939540',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939545',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939544',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939503',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d39395413',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939533',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-    {
-      _id: '68d66156422d71b9d3939523',
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Cotton T-Shirt Red Medium',
-      description: 'Premium cotton t-shirt in red color, size medium',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [],
-      attributes: {
-        author: 'Unknown Author',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
-    },
-  ];
-
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/products`;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    // Remove trailing slash if present and ensure no /api prefix in base URL
+    const cleanBaseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
+    const url = `${cleanBaseUrl}/api/products/public`;
 
     const cookieStore = await cookies();
     const cookieHeader = cookieStore
@@ -330,23 +99,33 @@ async function ProductsList() {
       .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
       .join("; ");
 
-    await axios.get(url, {
+    const response = await fetch(url, {
       headers: { Cookie: cookieHeader },
+      cache: 'no-store'
     });
 
-    // products = response.data;
+    if (!response.ok) {
+      throw new Error('Failed to fetch products');
+    }
+
+    const products: Product[] = await response.json();
+
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+        {Array.isArray(products) &&
+          products.slice(0, 8).map((product: Product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+      </div>
+    );
   } catch (error) {
     console.error("Error fetching products:", error);
+    return (
+      <div className="text-center py-10 text-gray-600">
+        <p>Unable to load products at the moment.</p>
+      </div>
+    );
   }
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-      {Array.isArray(products) &&
-        products.slice(0, 6).map((product: Product) => (
-          <ProductCard key={product._id} product={product} />
-        ))}
-    </div>
-  );
 }
 
 const HeroSection = () => {

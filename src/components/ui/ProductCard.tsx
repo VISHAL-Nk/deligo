@@ -18,12 +18,7 @@ interface Product {
   currency: string;
   discount: number;
   images: string[];
-  attributes: {
-    author: string;
-    language: string;
-    genre: string;
-    pages: number;
-  };
+  attributes: Record<string, unknown>;
   stock: number;
   reserved: number;
   status: string;
@@ -36,8 +31,37 @@ const ProductCard = ({ product }: { product: Product }) => {
   const { data: session } = useSession();
   const router = useRouter();
   const [qty, setQty] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const updateQuantity = (productId: string, change: number) => {
+  const updateCartAPI = async (productId: string, newQty: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId,
+          quantity: newQty
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update cart');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Cart update error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateQuantity = async (productId: string, change: number) => {
     // Check if user is logged in
     if (!session) {
       router.push('/auth/signin?callbackUrl=/');
@@ -45,22 +69,30 @@ const ProductCard = ({ product }: { product: Product }) => {
     }
 
     const newQty = Math.max(0, qty + change);
-    setQty(newQty);
-
-    // TODO: Implement cart quantity update logic via API
-    console.log('Update quantity:', productId, newQty);
+    
+    try {
+      await updateCartAPI(productId, newQty);
+      setQty(newQty);
+    } catch (error) {
+      console.error('Failed to update cart:', error);
+      alert('Failed to update cart. Please try again.');
+    }
   };
 
-  const addToCart = (product: Product) => {
+  const addToCart = async (product: Product) => {
     // Check if user is logged in
     if (!session) {
       router.push('/auth/signin?callbackUrl=/');
       return;
     }
 
-    setQty(1);
-    // TODO: Implement add to cart logic via API
-    console.log('Add to cart:', product);
+    try {
+      await updateCartAPI(product._id, 1);
+      setQty(1);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
   };
 
   const finalPrice = product.price - product.discount;
@@ -95,22 +127,25 @@ const ProductCard = ({ product }: { product: Product }) => {
         {qty === 0 ? (
           <button
             onClick={() => addToCart(product)}
-            className="bg-green-600 text-white text-sm px-3 py-1 rounded-md hover:bg-green-700 transition-colors"
+            disabled={loading}
+            className="bg-green-600 text-white text-sm px-3 py-1 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ADD
+            {loading ? 'Adding...' : 'ADD'}
           </button>
         ) : (
           <div className="flex items-center gap-2 bg-green-50 border border-green-600 rounded-md px-2 py-1">
             <button
               onClick={() => updateQuantity(product._id, -1)}
-              className="text-green-600 font-bold text-lg px-1 hover:text-green-700"
+              disabled={loading}
+              className="text-green-600 font-bold text-lg px-1 hover:text-green-700 disabled:opacity-50"
             >
               –
             </button>
             <span className="text-sm font-semibold min-w-[20px] text-center">{qty}</span>
             <button
               onClick={() => updateQuantity(product._id, 1)}
-              className="text-green-600 font-bold text-lg px-1 hover:text-green-700"
+              disabled={loading}
+              className="text-green-600 font-bold text-lg px-1 hover:text-green-700 disabled:opacity-50"
             >
               +
             </button>

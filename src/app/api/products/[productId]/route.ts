@@ -1,6 +1,5 @@
 import { dbConnect } from "@/lib/db";
 import Product from "@/models/Products.models";
-import { Session } from "@/lib/Session";
 
 export async function GET(
   request: Request,
@@ -8,21 +7,14 @@ export async function GET(
 ) {
   const { productId } = await params;
   try {
-    const session = await Session();
-    if (!session || !session.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
-    }
     await dbConnect();
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).lean();
     if (!product) {
       return new Response(JSON.stringify({ error: "Product not found" }), {
         status: 404,
       });
     }
-
 
     return new Response(JSON.stringify(product), { status: 200 });
   } catch (error) {

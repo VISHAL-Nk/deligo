@@ -32,20 +32,52 @@ function CheckoutContent() {
     }
 
     if (status === 'authenticated') {
-      // Mock checkout items - In production, fetch from cart API
       const productId = searchParams.get('productId');
       const quantity = parseInt(searchParams.get('quantity') || '1');
 
-      const mockItem: CheckoutItem = {
-        id: productId || '1',
-        name: 'Premium Cotton T-Shirt',
-        image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop',
-        price: 899,
-        quantity: quantity
-      };
-
-      setItems([mockItem]);
-      setLoading(false);
+      if (productId) {
+        // Fetch actual product data from API
+        fetch(`/api/products/${productId}`)
+          .then(res => res.json())
+          .then(product => {
+            const checkoutItem: CheckoutItem = {
+              id: product._id,
+              name: product.name,
+              image: product.images[0] || 'https://via.placeholder.com/200x200?text=Product',
+              price: product.price - product.discount,
+              quantity: quantity
+            };
+            setItems([checkoutItem]);
+            setLoading(false);
+          })
+          .catch(error => {
+            console.error('Error fetching product:', error);
+            // Fallback to showing error or redirect
+            alert('Product not found');
+            router.push('/');
+          });
+      } else {
+        // If no productId, try to fetch from cart
+        fetch('/api/cart')
+          .then(res => res.json())
+          .then(cartData => {
+            if (cartData.items && cartData.items.length > 0) {
+              const checkoutItems: CheckoutItem[] = cartData.items.map((item: { productId: { _id: string; name: string; images: string[]; price: number; discount: number }; quantity: number }) => ({
+                id: item.productId._id,
+                name: item.productId.name,
+                image: item.productId.images[0] || 'https://via.placeholder.com/200x200?text=Product',
+                price: item.productId.price - item.productId.discount,
+                quantity: item.quantity
+              }));
+              setItems(checkoutItems);
+            }
+            setLoading(false);
+          })
+          .catch(error => {
+            console.error('Error fetching cart:', error);
+            setLoading(false);
+          });
+      }
     }
   }, [status, router, searchParams]);
 
