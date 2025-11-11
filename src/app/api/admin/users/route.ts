@@ -39,7 +39,8 @@ export async function GET(req: NextRequest) {
       users.map(async (user: Record<string, unknown>) => {
         let profile = null;
         const userId = user._id as string;
-        const userRole = user.role as string;
+        // Use originalRole if it exists (real role), otherwise use role
+        const userRole = (user.originalRole as string) || (user.role as string);
 
         if (userRole === "customer") {
           profile = await UserProfile.findOne({ userId }).lean();
@@ -151,12 +152,15 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    // Use originalRole if it exists (real role), otherwise use role
+    const userRole = user.originalRole || user.role;
+
     // Delete associated profiles
-    if (user.role === "customer") {
+    if (userRole === "customer") {
       await UserProfile.findOneAndDelete({ userId });
-    } else if (user.role === "seller") {
+    } else if (userRole === "seller") {
       await SellerProfile.findOneAndDelete({ userId });
-    } else if (user.role === "delivery") {
+    } else if (userRole === "delivery") {
       await DeliveryProfile.findOneAndDelete({ userId });
     }
 

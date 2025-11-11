@@ -108,6 +108,13 @@ async function ProductsList() {
       throw new Error('Failed to fetch products');
     }
 
+    // Check if response is JSON before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error('Received non-JSON response:', await response.text());
+      throw new Error('Invalid response format');
+    }
+
     const products: Product[] = await response.json();
 
     return (

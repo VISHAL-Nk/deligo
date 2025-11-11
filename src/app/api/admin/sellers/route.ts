@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import SellerProfile from "@/models/SellerProfiles.models";
+import User from "@/models/User.models";
 import { Session } from "@/lib/Session";
 
 export async function GET(req: NextRequest) {
@@ -73,11 +74,19 @@ export async function PATCH(req: NextRequest) {
 
     if (action === "approve") {
       seller.kycStatus = "approved";
+      await seller.save();
+      
+      // Update the user's role and originalRole in the User collection
+      const user = await User.findById(seller.userId);
+      if (user) {
+        user.role = "seller";
+        user.originalRole = "seller";
+        await user.save();
+      }
     } else if (action === "reject") {
       seller.kycStatus = "rejected";
+      await seller.save();
     }
-
-    await seller.save();
 
     return NextResponse.json({
       success: true,
