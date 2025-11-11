@@ -257,7 +257,7 @@ function SearchContent() {
                         viewMode === 'list' ? 'w-24 h-24 flex-shrink-0' : 'aspect-square mb-4'
                       }`}>
                         <Image
-                          src={product.image || '/placeholder-product.png'}
+                          src={product.image || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png'}
                           alt={product.name}
                           fill
                           className="object-cover rounded-lg"

@@ -19,6 +19,8 @@ const Footer: React.FC = () => {
     { href: "/", label: "Home" },
     { href: "/cart", label: "Cart" },
     { href: "/login", label: "Login" },
+    { href: "/sellerapplication", label: "Apply for seller" },
+    { href: "/deliveryapplication", label: "Apply for Delivery partner" },
   ];
 
   const socialLinks: SocialLink[] = [

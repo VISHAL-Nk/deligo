@@ -29,7 +29,7 @@ export async function GET() {
         hero: {
           title: "Welcome to Deligo",
           description: "Your one-stop shop for everything you need",
-          imageUrl: "/placeholder.png",
+          imageUrl: "https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png",
         },
       });
     }

@@ -158,7 +158,7 @@ const ProductDetailPage = () => {
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="relative h-96 mb-4">
                 <Image
-                  src={product.images[selectedImage] || '/placeholder.png'}
+                  src={product.images[selectedImage] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png'}
                   alt={product.name}
                   fill
                   className="object-contain"

@@ -129,7 +129,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       
       <Link href={`/products/${product._id}`} className="w-full h-48 mb-3 overflow-hidden rounded-lg cursor-pointer">
         <Image
-          src={product.images[0] || '/placeholder.png'}
+          src={product.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png'}
           width={200}
           height={200}
           priority

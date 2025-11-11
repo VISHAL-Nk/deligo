@@ -62,7 +62,7 @@ const CartPage = () => {
               }) => ({
                 id: item.productId._id,
                 name: item.productId.name,
-                image: item.productId.images[0] || 'https://via.placeholder.com/200x200?text=Product',
+                image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
                 price: item.productId.price,
                 discount: item.productId.discount,
                 quantity: item.quantity,

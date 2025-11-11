@@ -10,7 +10,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'picsum.photos',
+        hostname: 'res.cloudinary.com',
         port: '',
         pathname: '/**',
       },
@@ -23,12 +23,6 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
         port: '',
         pathname: '/**',
       },
