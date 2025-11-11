@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Session } from "@/lib/Session";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
+import AdminFooter from "@/components/admin/AdminFooter";
 
 export default async function AdminLayout({
   children,
@@ -27,6 +28,7 @@ export default async function AdminLayout({
         <main className="mt-16 flex-1 p-4 sm:p-6">
           {children}
         </main>
+        <AdminFooter />
       </div>
     </div>
   );

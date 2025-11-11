@@ -35,10 +35,10 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Menu Button - Visible in both mobile and desktop mode */}
+      {/* Menu Button - Visible only on mobile/tablet (lg breakpoint and below) */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="fixed left-4 top-20 z-50 flex items-center justify-center rounded-lg bg-green-600 p-2 text-white shadow-lg"
+        className="fixed left-4 top-20 z-50 flex items-center justify-center rounded-lg bg-green-600 p-2 text-white shadow-lg lg:hidden"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
@@ -48,17 +48,17 @@ export default function AdminSidebar() {
         )}
       </button>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Only on mobile/tablet */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50"
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Always visible on desktop (lg+), toggleable on mobile */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-screen w-64 transform border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 z-40 h-screen w-64 transform border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
