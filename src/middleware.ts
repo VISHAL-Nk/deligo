@@ -15,6 +15,29 @@ const ratelimit = new Ratelimit({
 });
 
 export default withAuth(async function middleware(req) {
+  // Public API routes that don't require authentication
+  const publicApiRoutes = [
+    '/api/products/public',
+    '/api/auth',
+    '/api/category',
+    '/api/search/public'
+  ];
+
+  const pathname = req.nextUrl.pathname;
+
+  // Skip authentication for public API routes
+  if (publicApiRoutes.some(route => pathname.startsWith(route))) {
+    // Still apply rate limiting
+    const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
+    const { success } = await ratelimit.limit(ip);
+    
+    if (!success) {
+      return new NextResponse("Too many requests", { status: 429 });
+    }
+    
+    return NextResponse.next();
+  }
+
   // Rate limiting check - get client IP
   const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
   
@@ -27,7 +50,6 @@ export default withAuth(async function middleware(req) {
     }
   }
 
-  const pathname = req.nextUrl.pathname;
   const user = req.nextauth.token;
   const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
   

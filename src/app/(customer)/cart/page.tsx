@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface CartItem {
   id: string;
@@ -31,50 +32,142 @@ const CartPage = () => {
     }
 
     if (status === 'authenticated') {
-      // Mock cart items - In production, fetch from cart API
-      const mockCartItems: CartItem[] = [
-        {
-          id: '1',
-          name: 'Premium Cotton T-Shirt',
-          image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop',
-          price: 999,
-          discount: 100,
-          quantity: 2,
-          stock: 100
-        },
-        {
-          id: '2',
-          name: 'Wireless Headphones',
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop',
-          price: 2500,
-          discount: 450,
-          quantity: 1,
-          stock: 50
-        }
-      ];
-
-      setCartItems(mockCartItems);
-      setLoading(false);
+      // Fetch actual cart data from API
+      fetch('/api/cart')
+        .then(res => res.json())
+        .then(data => {
+          if (data.items && Array.isArray(data.items)) {
+            const formattedItems: CartItem[] = data.items
+              .filter((item: {
+                productId: {
+                  _id: string;
+                  name: string;
+                  images: string[];
+                  price: number;
+                  discount: number;
+                  stock: number;
+                } | null;
+                quantity: number;
+              }) => item.productId !== null) // Filter out items with null productId
+              .map((item: {
+                productId: {
+                  _id: string;
+                  name: string;
+                  images: string[];
+                  price: number;
+                  discount: number;
+                  stock: number;
+                };
+                quantity: number;
+              }) => ({
+                id: item.productId._id,
+                name: item.productId.name,
+                image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
+                price: item.productId.price,
+                discount: item.productId.discount,
+                quantity: item.quantity,
+                stock: item.productId.stock
+              }));
+            setCartItems(formattedItems);
+          } else {
+            setCartItems([]);
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching cart:', error);
+          setCartItems([]);
+          setLoading(false);
+        });
     }
   }, [status, router]);
 
-  const updateQuantity = (id: string, change: number) => {
+  const updateQuantity = async (id: string, change: number) => {
+    const item = cartItems.find(item => item.id === id);
+    if (!item) return;
+
+    const newQuantity = Math.max(1, Math.min(item.stock, item.quantity + change));
+    
+    // Optimistically update UI
     setCartItems(prevItems =>
       prevItems.map(item => {
         if (item.id === id) {
-          const newQuantity = Math.max(1, Math.min(item.stock, item.quantity + change));
           return { ...item, quantity: newQuantity };
         }
         return item;
       })
     );
 
-    // TODO: Update quantity in backend
+    // Update quantity in backend
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: id,
+          quantity: newQuantity
+        })
+      });
+
+      if (!response.ok) {
+        // Revert on error
+        setCartItems(prevItems =>
+          prevItems.map(item => {
+            if (item.id === id) {
+              return { ...item, quantity: item.quantity };
+            }
+            return item;
+          })
+        );
+        toast.error('Failed to update cart. Please try again.');
+      } else {
+        // Trigger cart count refresh
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      toast.error('Failed to update cart. Please try again.');
+    }
   };
 
-  const removeItem = (id: string) => {
+  const removeItem = async (id: string) => {
+    // Optimistically update UI
+    const removedItem = cartItems.find(item => item.id === id);
     setCartItems(prevItems => prevItems.filter(item => item.id !== id));
-    // TODO: Remove item from backend
+
+    // Remove item from backend by setting quantity to 0
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: id,
+          quantity: 0
+        })
+      });
+
+      if (!response.ok) {
+        // Revert on error
+        if (removedItem) {
+          setCartItems(prevItems => [...prevItems, removedItem]);
+        }
+        toast.error('Failed to remove item. Please try again.');
+      } else {
+        // Trigger cart count refresh
+        window.dispatchEvent(new Event('cartUpdated'));
+        toast.success('Item removed from cart');
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+      if (removedItem) {
+        setCartItems(prevItems => [...prevItems, removedItem]);
+      }
+      toast.error('Failed to remove item. Please try again.');
+    }
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price - item.discount) * item.quantity, 0);
@@ -84,7 +177,7 @@ const CartPage = () => {
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      alert('Your cart is empty!');
+      toast.error('Your cart is empty!');
       return;
     }
     router.push('/checkout');

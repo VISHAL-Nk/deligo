@@ -34,6 +34,7 @@ const Navbar = () => {
     const [searchSuggestions, setSearchSuggestions] = useState<SearchSuggestionsResponse | null>(null);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+    const [cartCount, setCartCount] = useState(0);
     
     const router = useRouter();
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,6 +43,33 @@ const Navbar = () => {
 
     // Debounce search suggestions
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    // Fetch cart count when user is authenticated
+    useEffect(() => {
+        const fetchCartCount = () => {
+            if (session.status === 'authenticated') {
+                fetch('/api/cart/count')
+                    .then(res => res.json())
+                    .then(data => {
+                        setCartCount(data.count || 0);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cart count:', error);
+                    });
+            } else {
+                setCartCount(0);
+            }
+        };
+
+        fetchCartCount();
+
+        // Listen for cart updates
+        window.addEventListener('cartUpdated', fetchCartCount);
+
+        return () => {
+            window.removeEventListener('cartUpdated', fetchCartCount);
+        };
+    }, [session.status]);
 
     const fetchSearchSuggestions = useCallback(async (query: string) => {
         if (!query.trim() || query.length < 2) {
@@ -376,6 +404,11 @@ const Navbar = () => {
                     {/* Cart */}
                     <Link href="/cart" className="relative p-2 hover:bg-green-700 rounded-lg transition-colors">
                         <ShoppingCart size={20} />
+                        {cartCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                {cartCount > 9 ? '9+' : cartCount}
+                            </span>
+                        )}
                     </Link>
 
                     {/* User Authentication */}

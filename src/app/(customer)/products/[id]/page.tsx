@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import ProductReviews from '@/components/ProductReviews';
+import toast from 'react-hot-toast';
 
 interface Product {
   _id: string;
@@ -17,12 +19,7 @@ interface Product {
   currency: string;
   discount: number;
   images: string[];
-  attributes: {
-    author: string;
-    language: string;
-    genre: string;
-    pages: number;
-  };
+  attributes: Record<string, unknown>;
   stock: number;
   reserved: number;
   status: string;
@@ -40,52 +37,57 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    // Mock product data - In production, fetch from API
-    const mockProduct: Product = {
-      _id: params.id as string,
-      sellerId: '68d66156422d71b9d3939546',
-      sku: 'TSHIRT-MED-RED',
-      name: 'Premium Cotton T-Shirt',
-      description: 'Experience ultimate comfort with our premium cotton t-shirt. Made from 100% organic cotton, this t-shirt offers breathability and softness that lasts. Perfect for casual wear or layering, it features a classic fit that flatters all body types. The durable fabric maintains its shape and color even after multiple washes.',
-      categoryId: '68d66156422d71b9d3939544',
-      price: 999,
-      currency: 'INR',
-      discount: 100,
-      images: [
-        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=800&fit=crop',
-        'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&h=800&fit=crop',
-        'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&h=800&fit=crop',
-        'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&h=800&fit=crop'
-      ],
-      attributes: {
-        author: 'Fashion Brand',
-        language: 'English',
-        genre: 'Fashion',
-        pages: 1
-      },
-      stock: 100,
-      reserved: 0,
-      status: 'active',
-      createdAt: '2025-09-26T09:48:06.528Z',
-      updatedAt: '2025-09-26T09:48:06.528Z'
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`/api/products/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProduct(data);
+        } else {
+          setProduct(null);
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setProduct(mockProduct);
-      setLoading(false);
-    }, 500);
+    fetchProduct();
   }, [params.id]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!session) {
       // Redirect to login if not authenticated
       router.push('/auth/signin?callbackUrl=/products/' + params.id);
       return;
     }
     
-    // Mock add to cart - In production, call API
-    alert(`Added ${quantity} item(s) to cart!`);
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: params.id,
+          quantity: quantity
+        })
+      });
+
+      if (response.ok) {
+        toast.success(`Added ${quantity} item(s) to cart!`);
+        // Trigger cart count refresh
+        window.dispatchEvent(new Event('cartUpdated'));
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to add to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart. Please try again.');
+    }
   };
 
   const handleBuyNow = () => {
@@ -156,7 +158,7 @@ const ProductDetailPage = () => {
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="relative h-96 mb-4">
                 <Image
-                  src={product.images[selectedImage] || '/placeholder.png'}
+                  src={product.images[selectedImage] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png'}
                   alt={product.name}
                   fill
                   className="object-contain"
@@ -324,10 +326,6 @@ const ProductDetailPage = () => {
                   <span className="font-medium text-gray-800">{product.sku}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-gray-600">Category</span>
-                  <span className="font-medium text-gray-800">{product.attributes.genre}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
                   <span className="text-gray-600">Status</span>
                   <span className="font-medium text-green-600 capitalize">{product.status}</span>
                 </div>
@@ -338,6 +336,11 @@ const ProductDetailPage = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Product Reviews Section */}
+        <div className="mt-8">
+          <ProductReviews productId={params.id as string} />
         </div>
       </div>
     </div>

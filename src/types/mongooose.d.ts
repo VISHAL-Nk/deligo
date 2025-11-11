@@ -6,6 +6,7 @@ export interface UserDocument extends Document {
   email: string;
   passwordHash?: string;
   role: "customer" | "seller" | "delivery" | "support" | "admin";
+  originalRole?: "customer" | "seller" | "delivery" | "support" | "admin";
   isVerified: boolean;
   hasProfile: boolean;
   createdAt: Date;

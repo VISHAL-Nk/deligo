@@ -14,25 +14,13 @@ export async function GET() {
     await dbConnect();
 
     // Fetch cart for the authenticated user and populate product details
-    const cart = await Cart.findOne({ userId: session.user.id })
-      .populate({
-        path: 'items.productId',
-        select: '_id name images price discount stock status'
-      })
-      .lean() as { items?: { productId: { status?: string; _id: unknown; name: string; images: string[]; price: number; discount: number; stock: number } | null; quantity: number }[] } | null;
+    const cart = await Cart.findOne({ userId: session.user.id }).populate('items.productId').lean();
     
     if (!cart) {
       return new Response(JSON.stringify({ items: [] }), { status: 200 });
     }
 
-    // Filter out items where productId is null or product is inactive
-    const validItems = cart.items?.filter((item: { productId: { status?: string } | null }) => {
-      return item.productId !== null && 
-             item.productId !== undefined &&
-             (!item.productId.status || item.productId.status === 'active');
-    }) || [];
-
-    return new Response(JSON.stringify({ ...cart, items: validItems }), { status: 200 });
+    return new Response(JSON.stringify(cart), { status: 200 });
   } catch (error) {
     let message = "Internal Server Error";
     if (error instanceof Error) message = error.message;
@@ -40,7 +28,7 @@ export async function GET() {
   }
 }
 
-// POST - Add item to cart or update quantity
+// POST - Add item to cart
 export async function POST(request: Request) {
   try {
     const session = await Session();
@@ -51,7 +39,7 @@ export async function POST(request: Request) {
 
     const { productId, quantity } = await request.json();
 
-    if (!productId || quantity < 0) {
+    if (!productId || !quantity || quantity < 1) {
       return new Response(JSON.stringify({ error: "Invalid product or quantity" }), { status: 400 });
     }
 
@@ -63,15 +51,8 @@ export async function POST(request: Request) {
     if (!cart) {
       cart = new Cart({
         userId: session.user.id,
-        items: []
+        items: [{ productId, quantity }]
       });
-    }
-
-    if (quantity === 0) {
-      // Remove item from cart
-      cart.items = cart.items.filter(
-        (item: { productId: { toString: () => string } }) => item.productId.toString() !== productId
-      );
     } else {
       // Check if product already exists in cart
       const existingItemIndex = cart.items.findIndex(
@@ -89,6 +70,57 @@ export async function POST(request: Request) {
 
     await cart.save();
 
+    return new Response(JSON.stringify({ message: "Item added to cart", cart }), { status: 200 });
+  } catch (error) {
+    let message = "Internal Server Error";
+    if (error instanceof Error) message = error.message;
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
+  }
+}
+
+// PUT - Update cart item quantity
+export async function PUT(request: Request) {
+  try {
+    const session = await Session();
+
+    if (!session?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
+    const { productId, quantity } = await request.json();
+
+    if (!productId || quantity < 0) {
+      return new Response(JSON.stringify({ error: "Invalid product or quantity" }), { status: 400 });
+    }
+
+    await dbConnect();
+
+    const cart = await Cart.findOne({ userId: session.user.id });
+
+    if (!cart) {
+      return new Response(JSON.stringify({ error: "Cart not found" }), { status: 404 });
+    }
+
+    if (quantity === 0) {
+      // Remove item from cart
+      cart.items = cart.items.filter(
+        (item: { productId: { toString: () => string } }) => item.productId.toString() !== productId
+      );
+    } else {
+      // Update quantity
+      const itemIndex = cart.items.findIndex(
+        (item: { productId: { toString: () => string } }) => item.productId.toString() === productId
+      );
+
+      if (itemIndex > -1) {
+        cart.items[itemIndex].quantity = quantity;
+      } else {
+        return new Response(JSON.stringify({ error: "Item not found in cart" }), { status: 404 });
+      }
+    }
+
+    await cart.save();
+
     return new Response(JSON.stringify({ message: "Cart updated", cart }), { status: 200 });
   } catch (error) {
     let message = "Internal Server Error";
@@ -97,8 +129,8 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE - Clear entire cart
-export async function DELETE() {
+// DELETE - Remove item from cart
+export async function DELETE(request: Request) {
   try {
     const session = await Session();
 
@@ -106,19 +138,28 @@ export async function DELETE() {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
+    const { productId } = await request.json();
+
+    if (!productId) {
+      return new Response(JSON.stringify({ error: "Product ID required" }), { status: 400 });
+    }
+
     await dbConnect();
 
-    // Find and clear the cart
     const cart = await Cart.findOne({ userId: session.user.id });
 
     if (!cart) {
-      return new Response(JSON.stringify({ message: "Cart is already empty" }), { status: 200 });
+      return new Response(JSON.stringify({ error: "Cart not found" }), { status: 404 });
     }
 
-    cart.items = [];
+    // Remove item from cart
+    cart.items = cart.items.filter(
+      (item: { productId: { toString: () => string } }) => item.productId.toString() !== productId
+    );
+
     await cart.save();
 
-    return new Response(JSON.stringify({ message: "Cart cleared successfully" }), { status: 200 });
+    return new Response(JSON.stringify({ message: "Item removed from cart", cart }), { status: 200 });
   } catch (error) {
     let message = "Internal Server Error";
     if (error instanceof Error) message = error.message;

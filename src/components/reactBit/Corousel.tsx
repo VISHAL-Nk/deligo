@@ -19,10 +19,10 @@ export interface CarouselProps {
 }
 
 const DEFAULT_ITEMS: CarouselItem[] = [
-  { id: 1, image: 'https://picsum.photos/1200/600?random=1' },
-  { id: 2, image: 'https://picsum.photos/1200/600?random=2' },
-  { id: 3, image: 'https://picsum.photos/1200/600?random=3' },
-  { id: 4, image: 'https://picsum.photos/1200/600?random=4' }
+  { id: 1, image: 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png' },
+  { id: 2, image: 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png' },
+  { id: 3, image: 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png' },
+  { id: 4, image: 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png' }
 ];
 
 const GAP = 16;

@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { Save } from "lucide-react";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 interface HeroFormProps {
   initialData: {
@@ -33,14 +34,14 @@ export default function HeroForm({ initialData, onSuccess }: HeroFormProps) {
       const data = await response.json();
 
       if (data.success) {
-        alert("Hero section updated successfully!");
+        toast.success("Hero section updated successfully!");
         onSuccess();
       } else {
-        alert(data.error || "Failed to update hero section");
+        toast.error(data.error || "Failed to update hero section");
       }
     } catch (error) {
       console.error("Error updating hero section:", error);
-      alert("Failed to update hero section");
+      toast.error("Failed to update hero section");
     } finally {
       setLoading(false);
     }

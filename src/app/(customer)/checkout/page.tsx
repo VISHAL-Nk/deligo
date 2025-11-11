@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { ArrowLeft, CreditCard, Wallet, Building2, ShoppingBag } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface CheckoutItem {
   id: string;
@@ -32,20 +33,51 @@ function CheckoutContent() {
     }
 
     if (status === 'authenticated') {
-      // Mock checkout items - In production, fetch from cart API
       const productId = searchParams.get('productId');
       const quantity = parseInt(searchParams.get('quantity') || '1');
 
-      const mockItem: CheckoutItem = {
-        id: productId || '1',
-        name: 'Premium Cotton T-Shirt',
-        image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop',
-        price: 899,
-        quantity: quantity
-      };
-
-      setItems([mockItem]);
-      setLoading(false);
+      if (productId) {
+        // Fetch actual product data from API
+        fetch(`/api/products/${productId}`)
+          .then(res => res.json())
+          .then(product => {
+            const checkoutItem: CheckoutItem = {
+              id: product._id,
+              name: product.name,
+              image: product.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
+              price: product.price - product.discount,
+              quantity: quantity
+            };
+            setItems([checkoutItem]);
+            setLoading(false);
+          })
+          .catch(error => {
+            console.error('Error fetching product:', error);
+            toast.error('Product not found');
+            router.push('/');
+          });
+      } else {
+        // If no productId, try to fetch from cart
+        fetch('/api/cart')
+          .then(res => res.json())
+          .then(cartData => {
+            if (cartData.items && cartData.items.length > 0) {
+              const checkoutItems: CheckoutItem[] = cartData.items.map((item: { productId: { _id: string; name: string; images: string[]; price: number; discount: number }; quantity: number }) => ({
+                id: item.productId._id,
+                name: item.productId.name,
+                image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
+                price: item.productId.price - item.productId.discount,
+                quantity: item.quantity
+              }));
+              setItems(checkoutItems);
+            }
+            setLoading(false);
+          })
+          .catch(error => {
+            console.error('Error fetching cart:', error);
+            setLoading(false);
+          });
+      }
     }
   }, [status, router, searchParams]);
 
@@ -57,16 +89,35 @@ function CheckoutContent() {
   const handlePayment = async () => {
     setProcessingPayment(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      // Show success alert
-      alert('🎉 Payment Successful! Your order has been placed.');
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Remove items from cart (in production, call API)
-      // For now, just redirect to home
+      // Clear the cart after successful payment
+      const response = await fetch('/api/cart', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Dispatch event to update cart count in navbar
+        window.dispatchEvent(new Event('cartUpdated'));
+        
+        // Show success message
+        toast.success('🎉 Payment Successful! Your order has been placed.');
+        
+        // Redirect to home after a short delay
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+      } else {
+        toast.error('Payment successful but failed to clear cart. Please refresh the page.');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Payment failed. Please try again.');
+    } finally {
       setProcessingPayment(false);
-      router.push('/');
-    }, 2000);
+    }
   };
 
   if (loading || status === 'loading') {

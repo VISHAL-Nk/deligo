@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface DeliveryPartner {
   _id: string;
@@ -44,12 +45,12 @@ export default function DeliveryTable({
       });
       const data = await response.json();
       if (data.success) {
-        alert(data.message);
+        toast.success(data.message);
         onRefresh();
       }
     } catch (error) {
       console.error("Error performing action:", error);
-      alert("Failed to perform action");
+      toast.error("Failed to perform action");
     } finally {
       setLoading(null);
     }

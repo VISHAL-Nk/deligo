@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import DeliveryProfile from "@/models/DeliveryProfiles.models";
+import User from "@/models/User.models";
 import { Session } from "@/lib/Session";
 
 export async function GET(req: NextRequest) {
@@ -74,12 +75,20 @@ export async function PATCH(req: NextRequest) {
     if (action === "approve") {
       delivery.kycStatus = "approved";
       delivery.status = "active";
+      await delivery.save();
+      
+      // Update the user's role and originalRole in the User collection
+      const user = await User.findById(delivery.userId);
+      if (user) {
+        user.role = "delivery";
+        user.originalRole = "delivery";
+        await user.save();
+      }
     } else if (action === "reject") {
       delivery.kycStatus = "rejected";
       delivery.status = "inactive";
+      await delivery.save();
     }
-
-    await delivery.save();
 
     return NextResponse.json({
       success: true,
