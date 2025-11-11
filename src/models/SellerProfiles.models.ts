@@ -49,6 +49,7 @@ const SellerProfileSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    rejectionReason: { type: String },
   },
   { timestamps: true }
 );
