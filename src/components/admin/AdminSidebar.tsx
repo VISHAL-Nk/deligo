@@ -16,12 +16,14 @@ import {
   UserCircle,
   Menu,
   X,
+  Tag,
 } from "lucide-react";
 
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Sellers", href: "/admin/sellers", icon: Store },
+  { name: "Categories", href: "/admin/categories", icon: Tag },
   { name: "Delivery Partners", href: "/admin/delivery", icon: Truck },
   { name: "Statistics", href: "/admin/statistics", icon: BarChart3 },
   { name: "Hero Section", href: "/admin/hero", icon: Image },

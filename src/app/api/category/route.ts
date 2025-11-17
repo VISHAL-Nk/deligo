@@ -15,14 +15,14 @@ export async function GET(request: Request){
         const searchParams = new URL(request.url).searchParams;
         const category = searchParams.get("category");
         if(!category){
-            const categories = await Category.find({status: "active"}).lean();
+            const categories = await Category.find({}).lean();
             const top5Categories = categories.slice(0, 5);
-            return new NextResponse(JSON.stringify({categories,top5Categories}), {status: 200});
+            return new NextResponse(JSON.stringify({success: true, categories, top5Categories}), {status: 200});
         }
         
-        const categories = await Category.find({name: {$regex: category, $options: "i"}, status: "active"}).lean();
+        const categories = await Category.find({name: {$regex: category, $options: "i"}}).lean();
 
-        const product = await Product.find({categoryId: {$in: categories.map(cat => cat._id)}, status: "active"}).lean();
+        const product = await Product.find({categoryId: {$in: categories.map(cat => cat._id)}}).lean();
 
         if(!product || product.length === 0){
             return new NextResponse("No products found", {status: 404});

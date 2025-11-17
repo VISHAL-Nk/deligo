@@ -7,11 +7,22 @@
         int rating
         string comment
         array images
+        objectId sellerReply
+        boolean reported
+        string reportReason
         date createdAt
     }
 */
 
 import mongoose from "mongoose";
+
+const SellerReplySchema = new mongoose.Schema(
+  {
+    message: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 
 const ReviewSchema = new mongoose.Schema(
   {
@@ -28,9 +39,16 @@ const ReviewSchema = new mongoose.Schema(
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String },
     images: { type: [String], default: [] }, // Array of image URLs
+    sellerReply: { type: SellerReplySchema }, // Seller's response to review
+    reported: { type: Boolean, default: false }, // Flag for inappropriate content
+    reportReason: { type: String }, // Reason for reporting
   },
   { timestamps: true }
 );
+
+// Index for faster product review queries
+ReviewSchema.index({ productId: 1 });
+ReviewSchema.index({ userId: 1 });
 
 const Review = mongoose.models?.Review || mongoose.model("Review", ReviewSchema);
 

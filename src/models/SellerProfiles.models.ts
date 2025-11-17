@@ -8,6 +8,10 @@
         object[] store "subdocs: {name, address}"
         double rating
         string kycStatus "pending | approved | rejected"
+        object storefront "subdoc: {logo, banner, bio, contactEmail, contactPhone}"
+        boolean maintenanceMode
+        object subscription "subdoc: {plan, startDate, endDate, status}"
+        array kycDocuments
     }
 */
 
@@ -26,6 +30,27 @@ const storeSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     address: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const StorefrontSchema = new mongoose.Schema(
+  {
+    logo: { type: String }, // Cloudinary URL
+    banner: { type: String }, // Cloudinary URL
+    bio: { type: String },
+    contactEmail: { type: String },
+    contactPhone: { type: String },
+  },
+  { _id: false }
+);
+
+const SubscriptionSchema = new mongoose.Schema(
+  {
+    plan: { type: String, enum: ["free", "basic", "premium"], default: "free" },
+    startDate: { type: Date },
+    endDate: { type: Date },
+    status: { type: String, enum: ["active", "inactive", "expired"], default: "inactive" },
   },
   { _id: false }
 );
@@ -50,6 +75,10 @@ const SellerProfileSchema = new mongoose.Schema(
       default: "pending",
     },
     rejectionReason: { type: String },
+    storefront: { type: StorefrontSchema, default: {} }, // Storefront customization
+    maintenanceMode: { type: Boolean, default: false }, // Toggle availability
+    subscription: { type: SubscriptionSchema, default: {} }, // Seller subscription
+    kycDocuments: { type: [String], default: [] }, // Array of document URLs
   },
   { timestamps: true }
 );
