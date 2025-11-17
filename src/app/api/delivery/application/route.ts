@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validationResult = deliveryApplicationSchema.safeParse(body);
     if (!validationResult.success) {
+      console.error("Validation failed:", validationResult.error.issues);
+      console.error("Received data:", body);
       return NextResponse.json(
         {
           success: false,
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has a delivery profile
     const existingProfile = await DeliveryProfile.findOne({
-      userId: session.user._id,
+      userId: session.user.id,
     });
 
     if (existingProfile) {
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Create delivery profile
     const deliveryProfile = await DeliveryProfile.create({
-      userId: session.user._id,
+      userId: session.user.id,
       vehicleType: data.vehicleType,
       licenseNumber: data.licenseNumber,
       region: data.region,
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update user profile if needed
-    await User.findByIdAndUpdate(session.user._id, {
+    await User.findByIdAndUpdate(session.user.id, {
       $set: {
         "profile.phone": data.phone,
       },
@@ -132,7 +134,7 @@ export async function GET() {
 
     // Get user's delivery profile application status
     const deliveryProfile = await DeliveryProfile.findOne({
-      userId: session.user._id,
+      userId: session.user.id,
     }).select("kycStatus status vehicleType region createdAt");
 
     if (!deliveryProfile) {

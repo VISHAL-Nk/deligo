@@ -103,7 +103,6 @@ const ShipmentSchema = new mongoose.Schema(
 // Indexes for efficient queries
 ShipmentSchema.index({ deliveryPersonId: 1, status: 1 });
 ShipmentSchema.index({ status: 1 });
-ShipmentSchema.index({ trackingNumber: 1 });
 ShipmentSchema.index({ createdAt: -1 });
 
 const Shipment =

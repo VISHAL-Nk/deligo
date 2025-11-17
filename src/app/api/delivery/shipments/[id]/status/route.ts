@@ -4,6 +4,8 @@ import { authOptions } from "../../../../auth/[...nextauth]/route";
 import { dbConnect } from "@/lib/db";
 import Shipment from "@/models/Shipments.models";
 import DeliveryProfile from "@/models/DeliveryProfiles.models";
+import Order from "@/models/Orders.models";
+import Notification from "@/models/Notifications.models";
 
 // PATCH /api/delivery/shipments/[id]/status - Update shipment status
 export async function PATCH(
@@ -51,7 +53,7 @@ export async function PATCH(
 
     // Get delivery profile
     const deliveryProfile = await DeliveryProfile.findOne({
-      userId: session.user._id,
+      userId: session.user.id,
     });
 
     if (!deliveryProfile) {
@@ -107,6 +109,45 @@ export async function PATCH(
     }
 
     await shipment.save();
+
+    // Get order for notifications
+    const order = await Order.findById(shipment.orderId);
+
+    if (order) {
+      // Notify customer about status change
+      let customerMessage = "";
+      if (status === "accepted") {
+        customerMessage = `Delivery partner accepted your order #${order._id.toString().slice(-6)}`;
+      } else if (status === "picked_up") {
+        customerMessage = `Your order #${order._id.toString().slice(-6)} has been picked up and is on the way!`;
+        // Update order status
+        order.status = "shipped";
+        await order.save();
+      } else if (status === "in-transit") {
+        customerMessage = `Your order #${order._id.toString().slice(-6)} is in transit`;
+      } else if (status === "failed") {
+        customerMessage = `Delivery failed for order #${order._id.toString().slice(-6)}. We'll contact you soon.`;
+      }
+
+      if (customerMessage) {
+        await Notification.create({
+          userId: order.userId,
+          message: customerMessage,
+          type: "order",
+          isRead: false,
+        });
+      }
+
+      // Notify seller about pickup
+      if (status === "picked_up") {
+        await Notification.create({
+          userId: order.sellerId,
+          message: `Order #${order._id.toString().slice(-6)} has been picked up by delivery partner`,
+          type: "order",
+          isRead: false,
+        });
+      }
+    }
 
     return NextResponse.json(
       {

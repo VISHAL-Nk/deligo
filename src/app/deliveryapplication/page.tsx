@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bike, Car, Truck, Check } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function DeliveryApplicationPage() {
   const router = useRouter();
@@ -26,7 +27,9 @@ export default function DeliveryApplicationPage() {
     e.preventDefault();
 
     if (!formData.agreedToTerms) {
-      alert("Please agree to the terms and conditions");
+      toast.error("Please agree to the terms and conditions", {
+        duration: 4000,
+      });
       return;
     }
 
@@ -42,14 +45,35 @@ export default function DeliveryApplicationPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message);
-        router.push("/");
+        toast.success(data.message, {
+          duration: 5000,
+        });
+        setTimeout(() => router.push("/"), 1000);
       } else {
-        alert(data.message || "Failed to submit application");
+        console.error("Application error:", data);
+        if (data.errors) {
+          // Show first error in toast
+          const firstError = data.errors[0];
+          const errorMsg = `${firstError.path.join('.')}: ${firstError.message}`;
+          toast.error(errorMsg, {
+            duration: 5000,
+          });
+          
+          // Log all errors to console for debugging
+          data.errors.forEach((e: { path: string[]; message: string }) => {
+            console.error(`${e.path.join('.')}: ${e.message}`);
+          });
+        } else {
+          toast.error(data.message || "Failed to submit application", {
+            duration: 4000,
+          });
+        }
       }
     } catch (error) {
       console.error("Error submitting application:", error);
-      alert("Failed to submit application");
+      toast.error("Failed to submit application. Please try again.", {
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }

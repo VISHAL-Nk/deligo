@@ -43,7 +43,7 @@ export async function POST(
 
     // Get delivery profile
     const deliveryProfile = await DeliveryProfile.findOne({
-      userId: session.user._id,
+      userId: session.user.id,
     });
 
     if (!deliveryProfile) {

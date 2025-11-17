@@ -84,7 +84,6 @@ const DeliveryProfileSchema = new mongoose.Schema(
 );
 
 // Indexes for efficient queries
-DeliveryProfileSchema.index({ userId: 1 });
 DeliveryProfileSchema.index({ isOnline: 1, isAvailable: 1, region: 1 });
 DeliveryProfileSchema.index({ kycStatus: 1 });
 

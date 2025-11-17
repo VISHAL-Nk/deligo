@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Get delivery profile
     const deliveryProfile = await DeliveryProfile.findOne({
-      userId: session.user._id,
+      userId: session.user.id,
     });
 
     if (!deliveryProfile) {

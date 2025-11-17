@@ -11,7 +11,9 @@ import {
   DollarSign,
   CheckCircle,
   Navigation,
+  Power,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Stats {
   total: number;
@@ -34,6 +36,8 @@ export default function DriverDashboard() {
   const [earnings, setEarnings] = useState<EarningsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -41,9 +45,10 @@ export default function DriverDashboard() {
 
   const fetchData = async () => {
     try {
-      const [assignmentsRes, earningsRes] = await Promise.all([
+      const [assignmentsRes, earningsRes, availabilityRes] = await Promise.all([
         fetch("/api/delivery/assignments"),
         fetch("/api/delivery/earnings"),
+        fetch("/api/delivery/availability"),
       ]);
 
       if (assignmentsRes.status === 404 || earningsRes.status === 404) {
@@ -61,11 +66,41 @@ export default function DriverDashboard() {
         const earningsData = await earningsRes.json();
         setEarnings(earningsData.data.summary);
       }
+
+      if (availabilityRes.ok) {
+        const availabilityData = await availabilityRes.json();
+        setIsOnline(availabilityData.isOnline || false);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleOnlineStatus = async () => {
+    setTogglingStatus(true);
+    try {
+      const res = await fetch("/api/delivery/availability", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isOnline: !isOnline }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setIsOnline(data.isOnline);
+        toast.success(data.message, { duration: 3000 });
+      } else {
+        toast.error(data.error || "Failed to update status", { duration: 4000 });
+      }
+    } catch (error) {
+      console.error("Error toggling status:", error);
+      toast.error("Failed to update online status", { duration: 4000 });
+    } finally {
+      setTogglingStatus(false);
     }
   };
 
@@ -108,142 +143,153 @@ export default function DriverDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Welcome back, {session?.user?.name}!
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Here&apos;s your delivery dashboard
-        </p>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Mobile-First Header with Status Toggle */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 sticky top-0 z-10 shadow-lg">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h1 className="text-xl font-bold">
+              {session?.user?.name || "Driver"}
+            </h1>
+            <p className="text-green-100 text-sm">Delivery Dashboard</p>
+          </div>
+          <Link href="/driver/profile" className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
+            <MapPin className="h-5 w-5" />
+          </Link>
+        </div>
+
+        {/* Online/Offline Toggle - Prominent */}
+        <button
+          onClick={toggleOnlineStatus}
+          disabled={togglingStatus}
+          className={`w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-all shadow-lg ${
+            isOnline
+              ? "bg-white text-green-600 hover:bg-green-50"
+              : "bg-red-500 text-white hover:bg-red-600"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+        >
+          <Power className={`h-5 w-5 ${togglingStatus ? "animate-spin" : ""}`} />
+          <span className="text-lg">
+            {togglingStatus ? "Updating..." : isOnline ? "YOU ARE ONLINE" : "YOU ARE OFFLINE"}
+          </span>
+        </button>
+        
+        {!isOnline && (
+          <p className="text-center text-green-100 text-xs mt-2">
+            Tap to go online and start receiving deliveries
+          </p>
+        )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-orange-600">
+      <div className="p-4 space-y-4">
+        {/* Stats Grid - Mobile Optimized */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-orange-500">
+            <div className="flex items-center justify-between mb-1">
+              <Clock className="h-5 w-5 text-orange-600" />
+              <span className="text-2xl font-bold text-orange-600">
                 {stats?.pending || 0}
-              </p>
+              </span>
             </div>
-            <Clock className="h-8 w-8 text-orange-600" />
+            <p className="text-xs text-gray-600 font-medium">Pending</p>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">In Progress</p>
-              <p className="text-2xl font-bold text-blue-600">
+          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between mb-1">
+              <Navigation className="h-5 w-5 text-blue-600" />
+              <span className="text-2xl font-bold text-blue-600">
                 {stats?.inProgress || 0}
-              </p>
+              </span>
             </div>
-            <Navigation className="h-8 w-8 text-blue-600" />
+            <p className="text-xs text-gray-600 font-medium">In Progress</p>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-green-600">
+          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
+            <div className="flex items-center justify-between mb-1">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span className="text-2xl font-bold text-green-600">
                 {stats?.completed || 0}
-              </p>
+              </span>
             </div>
-            <CheckCircle className="h-8 w-8 text-green-600" />
+            <p className="text-xs text-gray-600 font-medium">Completed</p>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-gray-500">
+            <div className="flex items-center justify-between mb-1">
+              <Package className="h-5 w-5 text-gray-900" />
+              <span className="text-2xl font-bold text-gray-900">
                 {stats?.total || 0}
-              </p>
+              </span>
             </div>
-            <Package className="h-8 w-8 text-gray-900" />
+            <p className="text-xs text-gray-600 font-medium">Total</p>
           </div>
         </div>
-      </div>
 
-      {/* Earnings Summary */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Earnings Summary</h2>
-          <DollarSign className="h-8 w-8" />
+        {/* Earnings Card - Mobile Optimized */}
+        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl shadow-lg p-5 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold">Today's Earnings</h2>
+            <DollarSign className="h-6 w-6" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-green-100 text-sm">Total Earned</span>
+              <span className="text-2xl font-bold">
+                ₹{earnings?.totalEarnings?.toFixed(2) || "0.00"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-t border-green-500 pt-2">
+              <span className="text-green-100 text-xs">Pending</span>
+              <span className="text-lg font-semibold">
+                ₹{earnings?.pendingEarnings?.toFixed(2) || "0.00"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-green-100 text-xs">Paid Out</span>
+              <span className="text-lg font-semibold">
+                ₹{earnings?.paidEarnings?.toFixed(2) || "0.00"}
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div>
-            <p className="text-green-100 text-sm">Total Earnings</p>
-            <p className="text-2xl font-bold">
-              ₹{earnings?.totalEarnings?.toFixed(2) || "0.00"}
-            </p>
-          </div>
-          <div>
-            <p className="text-green-100 text-sm">Pending</p>
-            <p className="text-2xl font-bold">
-              ₹{earnings?.pendingEarnings?.toFixed(2) || "0.00"}
-            </p>
-          </div>
-          <div>
-            <p className="text-green-100 text-sm">Paid Out</p>
-            <p className="text-2xl font-bold">
-              ₹{earnings?.paidEarnings?.toFixed(2) || "0.00"}
-            </p>
-          </div>
+
+        {/* Quick Actions - Mobile First */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 px-1">Quick Actions</h3>
+          
+          <Link
+            href="/driver/assignments"
+            className="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow active:scale-95"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <Package className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900">My Deliveries</h4>
+                <p className="text-sm text-gray-600">View and manage assignments</p>
+              </div>
+              <span className="text-blue-600 font-bold text-lg">
+                {(stats?.pending || 0) + (stats?.inProgress || 0)}
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/driver/earnings"
+            className="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow active:scale-95"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="bg-green-100 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900">Earnings History</h4>
+                <p className="text-sm text-gray-600">Track your income</p>
+              </div>
+            </div>
+          </Link>
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link
-          href="/driver/assignments"
-          className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Package className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">View Deliveries</h3>
-              <p className="text-sm text-gray-600">Manage your assignments</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          href="/driver/earnings"
-          className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Earnings</h3>
-              <p className="text-sm text-gray-600">Track your income</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          href="/driver/profile"
-          className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <MapPin className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Profile</h3>
-              <p className="text-sm text-gray-600">Update your details</p>
-            </div>
-          </div>
-        </Link>
       </div>
     </div>
   );

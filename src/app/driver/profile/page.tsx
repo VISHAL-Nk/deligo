@@ -155,19 +155,19 @@ export default function DriverProfilePage() {
             <div>
               <p className="text-sm text-gray-600">Rating</p>
               <p className="text-2xl font-bold text-yellow-600">
-                {profile.rating.toFixed(1)} ⭐
+                {profile.rating ? profile.rating.toFixed(1) : '0.0'} ⭐
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Deliveries</p>
               <p className="text-2xl font-bold text-blue-600">
-                {profile.totalDeliveries}
+                {profile.totalDeliveries || 0}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Completed</p>
               <p className="text-2xl font-bold text-green-600">
-                {profile.completedDeliveries}
+                {profile.completedDeliveries || 0}
               </p>
             </div>
             <div>

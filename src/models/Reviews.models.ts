@@ -46,8 +46,8 @@ const ReviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for faster product review queries
-ReviewSchema.index({ productId: 1 });
+// Indexes for faster review queries
+ReviewSchema.index({ productId: 1, userId: 1 });
 ReviewSchema.index({ userId: 1 });
 
 const Review = mongoose.models?.Review || mongoose.model("Review", ReviewSchema);

@@ -164,7 +164,8 @@ export default withAuth(async function middleware(req) {
   if (pathname.startsWith("/admin") || 
       pathname.startsWith("/seller") || 
       pathname.startsWith("/support") || 
-      pathname.startsWith("/delivery")) {
+      pathname.startsWith("/delivery") ||
+      pathname.startsWith("/driver")) {
     
     if (!user?.isVerified) {
       const verifyUrl = new URL("/auth/verify-email", req.url);
@@ -172,12 +173,16 @@ export default withAuth(async function middleware(req) {
       return NextResponse.redirect(verifyUrl);
     }
     
-    const hasProfile = user.hasProfile || false;
-    
-    if (!hasProfile) {
-      const profileUrl = new URL("/auth/complete-profile", req.url);
-      profileUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(profileUrl);
+    // For driver routes, skip the hasProfile check since delivery partners
+    // don't necessarily need a customer profile, just a delivery profile
+    if (!pathname.startsWith("/driver")) {
+      const hasProfile = user.hasProfile || false;
+      
+      if (!hasProfile) {
+        const profileUrl = new URL("/auth/complete-profile", req.url);
+        profileUrl.searchParams.set("callbackUrl", pathname);
+        return NextResponse.redirect(profileUrl);
+      }
     }
   }
 
@@ -200,6 +205,9 @@ export default withAuth(async function middleware(req) {
   if (user?.role !== "delivery" && !isRoleSimulating && pathname.startsWith("/delivery")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
+  if (user?.role !== "delivery" && !isRoleSimulating && pathname.startsWith("/driver")) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
 
   // Allow the request to proceed
   return NextResponse.next();
@@ -220,7 +228,8 @@ export default withAuth(async function middleware(req) {
           pathname.startsWith("/admin") || 
           pathname.startsWith("/seller") || 
           pathname.startsWith("/support") || 
-          pathname.startsWith("/delivery")) {
+          pathname.startsWith("/delivery") ||
+          pathname.startsWith("/driver")) {
         return !!token;
       }
       
@@ -240,6 +249,7 @@ export const config = {
     "/seller/:path*",
     "/support/:path*",
     "/delivery/:path*",
+    "/driver/:path*",
     "/auth/:path*",
     "/api/:path*"
   ],

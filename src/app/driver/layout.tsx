@@ -23,7 +23,7 @@ export default async function DriverLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto">{children}</div>
+      {children}
     </div>
   );
 }
