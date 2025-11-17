@@ -228,7 +228,7 @@ export default function DriverDashboard() {
         {/* Earnings Card - Mobile Optimized */}
         <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl shadow-lg p-5 text-white">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">Today's Earnings</h2>
+            <h2 className="text-lg font-bold">Today&apos;s Earnings</h2>
             <DollarSign className="h-6 w-6" />
           </div>
           <div className="space-y-2">
