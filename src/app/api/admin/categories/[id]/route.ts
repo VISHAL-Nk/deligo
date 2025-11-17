@@ -9,8 +9,9 @@ import { authOptions } from '../../../auth/[...nextauth]/route';
 // GET - Get single category
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any) as any;
@@ -26,7 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
-    const category = await Category.findById(params.id).populate('parentId', 'name').lean();
+    const category = await Category.findById(id).populate('parentId', 'name').lean();
 
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
@@ -48,8 +49,9 @@ export async function GET(
 // PATCH - Update category
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any) as any;
@@ -68,7 +70,7 @@ export async function PATCH(
     const body = await req.json();
     const { name, filters, parentCategoryId } = body;
 
-    const category = await Category.findById(params.id);
+    const category = await Category.findById(id);
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
@@ -77,7 +79,7 @@ export async function PATCH(
     if (name && name !== category.name) {
       // Check if another category has this name
       const existingCategory = await Category.findOne({
-        _id: { $ne: params.id },
+        _id: { $ne: id },
         name,
       });
 
@@ -113,8 +115,9 @@ export async function PATCH(
 // DELETE - Delete category
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any) as any;
@@ -130,13 +133,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
-    const category = await Category.findById(params.id);
+    const category = await Category.findById(id);
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
 
     // Check if category has products
-    const productCount = await Product.countDocuments({ categoryId: params.id });
+    const productCount = await Product.countDocuments({ categoryId: id });
     if (productCount > 0) {
       return NextResponse.json(
         { error: `Cannot delete category with ${productCount} product(s). Please reassign or delete products first.` },
@@ -145,7 +148,7 @@ export async function DELETE(
     }
 
     // Check if category has subcategories
-    const subcategoryCount = await Category.countDocuments({ parentId: params.id });
+    const subcategoryCount = await Category.countDocuments({ parentId: id });
     if (subcategoryCount > 0) {
       return NextResponse.json(
         { error: `Cannot delete category with ${subcategoryCount} subcategory(ies). Please delete subcategories first.` },
@@ -153,7 +156,7 @@ export async function DELETE(
       );
     }
 
-    await Category.findByIdAndDelete(params.id);
+    await Category.findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,
