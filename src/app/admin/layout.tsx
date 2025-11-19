@@ -13,8 +13,8 @@ export default async function AdminLayout({
 }) {
   const session = await Session();
 
-  // Check if user is admin - either current role is admin OR original role is admin (role simulator)
-  const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+  // Check if user is admin
+  const isAdmin = session?.user?.role === "admin";
   
   if (!session || !isAdmin) {
     redirect("/auth/signin");

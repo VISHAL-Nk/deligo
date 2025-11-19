@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     const [orders, total] = await Promise.all([
       Order.find(query)
         .populate('userId', 'name email')
-        .populate('items.productId', 'name images sku')
+        .populate('items.productId', 'name images sku price discount')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

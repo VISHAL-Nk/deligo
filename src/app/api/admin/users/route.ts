@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
   try {
     const session = await Session();
     
-    // Check if user is admin - either current role or original role (for role simulation)
-    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+    // Check if user is admin
+    const isAdmin = session?.user?.role === "admin";
 
     if (!session || !isAdmin) {
       return NextResponse.json(
@@ -39,8 +39,7 @@ export async function GET(req: NextRequest) {
       users.map(async (user: Record<string, unknown>) => {
         let profile = null;
         const userId = user._id as string;
-        // Use originalRole if it exists (real role), otherwise use role
-        const userRole = (user.originalRole as string) || (user.role as string);
+        const userRole = user.role as string;
 
         if (userRole === "customer") {
           profile = await UserProfile.findOne({ userId }).lean();
@@ -71,12 +70,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function PUT(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   try {
     const session = await Session();
 
-    // Check if user is admin - either current role or original role (for role simulation)
-    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+    // Check if user is admin
+    const isAdmin = session?.user?.role === "admin";
 
     if (!session || !isAdmin) {      return NextResponse.json(
         { error: "Unauthorized" },
@@ -122,8 +121,8 @@ export async function DELETE(req: NextRequest) {
   try {
     const session = await Session();
 
-    // Check if user is admin - either current role or original role (for role simulation)
-    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+    // Check if user is admin
+    const isAdmin = session?.user?.role === "admin";
 
     if (!session || !isAdmin) {
       return NextResponse.json(
@@ -152,8 +151,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Use originalRole if it exists (real role), otherwise use role
-    const userRole = user.originalRole || user.role;
+    const userRole = user.role;
 
     // Delete associated profiles
     if (userRole === "customer") {

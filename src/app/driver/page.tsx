@@ -258,6 +258,21 @@ export default function DriverDashboard() {
           <h3 className="text-sm font-semibold text-gray-700 px-1">Quick Actions</h3>
           
           <Link
+            href="/driver/available"
+            className="block bg-gradient-to-r from-green-600 to-green-700 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow active:scale-95"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <MapPin className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-white">Available Deliveries</h4>
+                <p className="text-sm text-green-100">Find new deliveries to accept</p>
+              </div>
+            </div>
+          </Link>
+          
+          <Link
             href="/driver/assignments"
             className="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow active:scale-95"
           >

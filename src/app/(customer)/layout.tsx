@@ -1,6 +1,5 @@
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/Footer";
-import RoleSimulatorBanner from "@/components/admin/RoleSimulatorBanner";
 
 export default function CustomerLayout({
   children,
@@ -12,7 +11,6 @@ export default function CustomerLayout({
       <Navbar />
       {children}
       <Footer />
-      <RoleSimulatorBanner />
     </>
   );
 }

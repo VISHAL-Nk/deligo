@@ -12,9 +12,9 @@ export async function GET() {
   try {
     // Check if user is authenticated and is admin
     const session = await Session();
-    
-    // Check if user is admin - either current role or original role (for role simulation)
-    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+
+    // Check if user is admin
+    const isAdmin = session?.user?.role === "admin";
 
     if (!session || !isAdmin) {
       return NextResponse.json(

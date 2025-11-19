@@ -187,25 +187,20 @@ export default withAuth(async function middleware(req) {
   }
 
   // RBAC (Role-Based Access Control) checks
-  // Allow access to admin if user is admin OR has originalRole (role simulator)
-  const isRoleSimulating = user?.originalRole !== undefined;
-  const isActualAdmin = user?.role === "admin" || user?.originalRole === "admin";
-  
-  if (!isActualAdmin && pathname.startsWith("/admin")) {
+  if (user?.role !== "admin" && pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
   
-  // For other role-specific routes, check current role (allow role simulation)
-  if (user?.role !== "seller" && !isRoleSimulating && pathname.startsWith("/seller")) {
+  if (user?.role !== "seller" && pathname.startsWith("/seller")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
-  if (user?.role !== "support" && !isRoleSimulating && pathname.startsWith("/support")) {
+  if (user?.role !== "support" && pathname.startsWith("/support")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
-  if (user?.role !== "delivery" && !isRoleSimulating && pathname.startsWith("/delivery")) {
+  if (user?.role !== "delivery" && pathname.startsWith("/delivery")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
-  if (user?.role !== "delivery" && !isRoleSimulating && pathname.startsWith("/driver")) {
+  if (user?.role !== "delivery" && pathname.startsWith("/driver")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 

@@ -24,18 +24,20 @@ interface Order {
     productId: {
       name: string;
       images: string[];
+      price: number;
+      discount: number;
     };
     quantity: number;
-    price: number;
   }[];
-  total: number;
+  totalAmount: number;
   status: string;
   paymentStatus: string;
   shippingAddress: {
     street: string;
     city: string;
     state: string;
-    postalCode: string;
+    zipCode?: string;
+    postalCode?: string;
   };
   createdAt: string;
 }
@@ -45,7 +47,7 @@ import { LucideIcon } from 'lucide-react';
 const statusColors: Record<string, { bg: string; text: string; icon: LucideIcon }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
   confirmed: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle },
-  processing: { bg: 'bg-purple-100', text: 'text-purple-700', icon: Package },
+  packed: { bg: 'bg-purple-100', text: 'text-purple-700', icon: Package },
   shipped: { bg: 'bg-indigo-100', text: 'text-indigo-700', icon: Truck },
   delivered: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle },
   cancelled: { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
@@ -264,23 +266,28 @@ export default function OrdersPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">₹{order.total.toFixed(2)}</p>
+                          <p className="text-2xl font-bold text-green-600">₹{order.totalAmount?.toFixed(2) || '0.00'}</p>
                           <p className="text-sm text-gray-600">{order.items.length} item(s)</p>
                         </div>
                       </div>
 
                       {/* Order Items */}
                       <div className="border-t border-gray-100 pt-4 mb-4">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-4 py-2">
-                            <div className="text-sm text-gray-700 flex-1">
-                              {item.productId.name} × {item.quantity}
+                        {order.items.map((item, idx) => {
+                          const itemPrice = item.productId?.price || 0;
+                          const itemDiscount = item.productId?.discount || 0;
+                          const finalPrice = itemPrice - (itemPrice * itemDiscount / 100);
+                          return (
+                            <div key={idx} className="flex items-center gap-4 py-2">
+                              <div className="text-sm text-gray-700 flex-1">
+                                {item.productId?.name || 'Unknown Product'} × {item.quantity}
+                              </div>
+                              <div className="text-sm font-semibold text-gray-900">
+                                ₹{(finalPrice * item.quantity).toFixed(2)}
+                              </div>
                             </div>
-                            <div className="text-sm font-semibold text-gray-900">
-                              ₹{(item.price * item.quantity).toFixed(2)}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       {/* Shipping Address */}
@@ -288,7 +295,7 @@ export default function OrdersPage() {
                         <p className="text-sm font-medium text-gray-700 mb-1">Shipping Address:</p>
                         <p className="text-sm text-gray-600">
                           {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
-                          {order.shippingAddress.state} - {order.shippingAddress.postalCode}
+                          {order.shippingAddress.state} - {order.shippingAddress.zipCode || order.shippingAddress.postalCode || ''}
                         </p>
                       </div>
 
@@ -313,14 +320,14 @@ export default function OrdersPage() {
                         
                         {order.status === 'confirmed' && (
                           <button
-                            onClick={() => updateOrderStatus(order._id, 'processing')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            onClick={() => updateOrderStatus(order._id, 'packed')}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                           >
-                            Start Processing
+                            Mark as Packed
                           </button>
                         )}
                         
-                        {order.status === 'processing' && (
+                        {order.status === 'packed' && (
                           <button
                             onClick={() => updateOrderStatus(order._id, 'shipped')}
                             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"

@@ -6,6 +6,7 @@ import Product from '@/models/Products.models';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
 import Payout from '@/models/Payouts.models';
+import Shipment from '@/models/Shipments.models';
 import { authOptions } from '../../../auth/[...nextauth]/route';
 import { calculateCommission } from '@/lib/analytics';
 
@@ -40,7 +41,7 @@ export async function GET(
       sellerId: sellerProfile._id,
     })
       .populate('userId', 'name email phone')
-      .populate('items.productId', 'name images sku price')
+      .populate('items.productId', 'name images sku price discount')
       .populate('paymentId')
       .populate('shipmentId');
 
@@ -106,6 +107,46 @@ export async function PATCH(
     const oldStatus = order.status;
     order.status = status;
     await order.save();
+
+    // Update shipment status when order status changes
+    if (order.shipmentId) {
+      const shipment = await Shipment.findById(order.shipmentId);
+      if (shipment) {
+        let shipmentStatus = shipment.status;
+        
+        // Map order status to shipment status
+        if (status === 'confirmed' && oldStatus === 'pending') {
+          shipmentStatus = 'pending'; // Ready for assignment
+        } else if (status === 'packed') {
+          shipmentStatus = 'pending'; // Ready for pickup
+          shipment.events.push({
+            status: 'pending',
+            timestamp: new Date(),
+            note: 'Order packed and ready for pickup'
+          });
+        } else if (status === 'shipped') {
+          // Don't change status - let delivery person handle this
+          // Just add an event
+          shipment.events.push({
+            status: shipment.status,
+            timestamp: new Date(),
+            note: 'Order marked as shipped by seller'
+          });
+        } else if (status === 'cancelled') {
+          shipmentStatus = 'cancelled';
+          shipment.events.push({
+            status: 'cancelled',
+            timestamp: new Date(),
+            note: 'Order cancelled'
+          });
+        }
+        
+        if (shipmentStatus !== shipment.status) {
+          shipment.status = shipmentStatus;
+        }
+        await shipment.save();
+      }
+    }
 
     // If order is confirmed, reduce inventory
     if (status === 'confirmed' && oldStatus === 'pending') {

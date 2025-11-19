@@ -22,10 +22,6 @@ const UserSchema = new mongoose.Schema(
       enum: ["customer", "seller", "delivery", "support", "admin"],
       default: "customer",
     },
-    originalRole: {
-      type: String,
-      enum: ["customer", "seller", "delivery", "support", "admin"],
-    },
     isVerified: { type: Boolean, default: false },
     hasProfile: { type: Boolean, default: false },
     lastLoginAt: { type: Date },

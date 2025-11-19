@@ -231,45 +231,64 @@ export default function DeliveryDetailPage() {
         </div>
       </div>
 
+      {/* Delivery Steps Guide */}
+      <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 border border-blue-200">
+        <h3 className="font-semibold text-gray-900 mb-2">📋 Delivery Steps:</h3>
+        <ol className="text-sm text-gray-700 space-y-1">
+          <li className={shipment.status === "assigned" ? "font-semibold text-green-600" : ""}>
+            1. Accept the assignment
+          </li>
+          <li className={shipment.status === "accepted" ? "font-semibold text-green-600" : ""}>
+            2. Mark as picked up from seller
+          </li>
+          <li className={shipment.status === "picked_up" ? "font-semibold text-green-600" : ""}>
+            3. Start transit to customer
+          </li>
+          <li className={shipment.status === "in-transit" ? "font-semibold text-green-600" : ""}>
+            4. Get customer signature & enter OTP to complete delivery
+          </li>
+        </ol>
+      </div>
+
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-4">
         {shipment.status === "assigned" && (
           <button
             onClick={() => updateStatus("accepted")}
-            className="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+            className="col-span-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
           >
             <CheckCircle className="h-5 w-5 mr-2" />
-            Accept
+            Accept Assignment
           </button>
         )}
 
         {shipment.status === "accepted" && (
           <button
             onClick={() => updateStatus("picked_up")}
-            className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+            className="col-span-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
           >
             <Package className="h-5 w-5 mr-2" />
-            Mark Picked Up
+            Mark as Picked Up
           </button>
         )}
 
         {shipment.status === "picked_up" && (
           <button
             onClick={() => updateStatus("in-transit")}
-            className="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
+            className="col-span-2 bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
           >
             <NavigationIcon className="h-5 w-5 mr-2" />
-            Start Transit
+            Start Transit to Customer
           </button>
         )}
 
         {shipment.status === "in-transit" && (
           <button
             onClick={() => setShowProofModal(true)}
-            className="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+            className="col-span-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
           >
             <QrCode className="h-5 w-5 mr-2" />
-            Complete Delivery
+            Complete Delivery (Get Signature & OTP)
           </button>
         )}
       </div>

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Session } from "@/lib/Session";
 import { dbConnect } from "@/lib/db";
+import crypto from "crypto";
 import Cart from "@/models/Cart.models";
 import Product from "@/models/Products.models";
 import Order from "@/models/Orders.models";
 import Shipment from "@/models/Shipments.models";
 import Notification from "@/models/Notifications.models";
 import User from "@/models/User.models";
+import Payment from "@/models/Payments.models";
 import { generateOTP, generateTrackingNumber } from "@/lib/delivery-utils";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
 
@@ -19,7 +21,27 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    const { shippingAddress, paymentMethod, items: directItems } = await req.json();
+    const { 
+      razorpay_order_id, 
+      razorpay_payment_id, 
+      razorpay_signature,
+      shippingAddress,
+      items: directItems
+    } = await req.json();
+
+    // Verify Razorpay signature
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (razorpay_signature !== expectedSign) {
+      return NextResponse.json(
+        { error: "Invalid payment signature" },
+        { status: 400 }
+      );
+    }
 
     if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || 
         !shippingAddress.state || !shippingAddress.zipCode) {
@@ -65,6 +87,8 @@ export async function POST(req: NextRequest) {
 
     // Group items by seller
     const sellerGroups = new Map();
+    let totalCartAmount = 0;
+
     for (const item of cartItems.items) {
       const product = item.productId;
       
@@ -88,13 +112,28 @@ export async function POST(req: NextRequest) {
         name: product.name,
         product: product
       });
+
+      const itemPrice = product.price - (product.price * product.discount / 100);
+      totalCartAmount += itemPrice * item.quantity;
     }
+
+    // Create payment record
+    const payment = await Payment.create({
+      userId: session.user.id,
+      amount: totalCartAmount + (totalCartAmount * 0.05) + 40, // Add tax and shipping
+      currency: "INR",
+      status: "completed",
+      paymentMethod: "razorpay",
+      transactionId: razorpay_payment_id,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature,
+    });
 
     const createdOrders = [];
 
     // Create separate orders for each seller
     for (const [sellerId, items] of sellerGroups) {
-      // Calculate totals
       interface CartItem {
         productId: string;
         quantity: number;
@@ -109,8 +148,8 @@ export async function POST(req: NextRequest) {
         return sum + (itemPrice * item.quantity);
       }, 0);
 
-      const taxAmount = totalAmount * 0.05; // 5% tax
-      const shippingFee = 40; // Fixed shipping fee
+      const taxAmount = totalAmount * 0.05;
+      const shippingFee = 40;
       const finalAmount = totalAmount + taxAmount + shippingFee;
 
       // Create order
@@ -127,10 +166,11 @@ export async function POST(req: NextRequest) {
         discountAmount: 0,
         shippingFee: shippingFee,
         currency: "INR",
-        shippingAddress: shippingAddress
+        shippingAddress: shippingAddress,
+        paymentId: payment._id
       });
 
-      // Update product inventory (reduce stock, increase reserved)
+      // Update product inventory
       for (const item of items) {
         await Product.findByIdAndUpdate(item.productId, {
           $inc: { 
@@ -141,7 +181,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Generate OTP for delivery verification
+      // Generate OTP and tracking number
       const otpCode = generateOTP();
       const trackingNumber = generateTrackingNumber();
 
@@ -173,7 +213,7 @@ export async function POST(req: NextRequest) {
         isRead: false
       });
 
-      // Send confirmation email to customer
+      // Send confirmation email
       try {
         await sendOrderConfirmationEmail(
           user.email,
@@ -191,7 +231,6 @@ export async function POST(req: NextRequest) {
         );
       } catch (emailError) {
         console.error("Failed to send confirmation email:", emailError);
-        // Don't fail the order if email fails
       }
 
       createdOrders.push({
@@ -212,14 +251,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Order(s) placed successfully",
+      message: "Payment verified and order(s) placed successfully",
       orders: createdOrders
     });
 
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error("Payment verification error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to process checkout" },
+      { error: error instanceof Error ? error.message : "Payment verification failed" },
       { status: 500 }
     );
   }

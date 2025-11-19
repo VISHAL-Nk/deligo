@@ -15,7 +15,6 @@ interface ExtendedSession extends Session {
     hasProfile: boolean;
     name: string | null;
     image?: string | null;
-    originalRole?: string;
   };
 }
 
@@ -32,15 +31,6 @@ export default function DeliveryDashboardPage() {
           <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">
             Manage your deliveries and track your earnings
           </p>
-          
-          {extendedSession?.user?.originalRole && (
-            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 sm:mt-4">
-              <p className="text-xs text-green-800 sm:text-sm">
-                🎭 <strong>Role Simulation Active:</strong> You&apos;re viewing this as a delivery partner. 
-                Use the floating banner to return to admin panel.
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Stats Cards */}

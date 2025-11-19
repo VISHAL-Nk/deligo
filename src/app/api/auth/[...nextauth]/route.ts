@@ -68,7 +68,6 @@ export const authOptions = {
             role: user.role,
             isVerified: user.isVerified,
             hasProfile: user.hasProfile,
-            originalRole: user.originalRole,
           };
         } catch (err) {
           if (err instanceof z.ZodError) {
@@ -109,7 +108,6 @@ export const authOptions = {
             token.role = dbUser.role;
             token.isVerified = dbUser.isVerified;
             token.hasProfile = dbUser.hasProfile;
-            token.originalRole = dbUser.originalRole;
           }
         } else {
           // For credentials provider, user.id is already the correct MongoDB ObjectId
@@ -122,7 +120,6 @@ export const authOptions = {
             | "admin";
           token.isVerified = (user as NextAuthUser).isVerified;
           token.hasProfile = (user as NextAuthUser).hasProfile;
-          token.originalRole = (user as NextAuthUser).originalRole;
         }
       }
 
@@ -134,7 +131,6 @@ export const authOptions = {
           token.isVerified = dbUser.isVerified;
           token.role = dbUser.role;
           token.hasProfile = dbUser.hasProfile;
-          token.originalRole = dbUser.originalRole;
         }
       }
 
@@ -154,7 +150,6 @@ export const authOptions = {
           | "admin";
         session.user.isVerified = token.isVerified as boolean;
         session.user.hasProfile = token.hasProfile as boolean;
-        session.user.originalRole = token.originalRole as string | undefined;
       }
       return session;
     },

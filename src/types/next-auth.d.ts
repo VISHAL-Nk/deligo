@@ -9,7 +9,6 @@ declare module "next-auth" {
       hasProfile: boolean;
       name: string | null;
       image?: string | null;
-      originalRole?: string;
     };
   }
 
@@ -21,7 +20,6 @@ declare module "next-auth" {
     hasProfile: boolean;
     name?: string | null;
     image?: string | null;
-    originalRole?: string;
   }
 }
 
@@ -31,6 +29,5 @@ declare module "next-auth/jwt" {
     role: "customer" | "seller" | "delivery" | "support" | "admin";
     isVerified: boolean;
     hasProfile: boolean;
-    originalRole?: string;
   }
 }

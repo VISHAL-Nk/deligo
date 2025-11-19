@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
   try {
     const session = await Session();
     
-    // Check if user is admin - either current role or original role (for role simulation)
-    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+    // Check if user is admin
+    const isAdmin = session?.user?.role === "admin";
 
     if (!session || !isAdmin) {
       return NextResponse.json(
@@ -49,8 +49,8 @@ export async function PATCH(req: NextRequest) {
   try {
     const session = await Session();
     
-    // Check if user is admin - either current role or original role (for role simulation)
-    const isAdmin = session?.user?.role === "admin" || session?.user?.originalRole === "admin";
+    // Check if user is admin
+    const isAdmin = session?.user?.role === "admin";
 
     if (!session || !isAdmin) {
       return NextResponse.json(
@@ -76,11 +76,10 @@ export async function PATCH(req: NextRequest) {
       seller.kycStatus = "approved";
       await seller.save();
       
-      // Update the user's role and originalRole in the User collection
+      // Update the user's role in the User collection
       const user = await User.findById(seller.userId);
       if (user) {
         user.role = "seller";
-        user.originalRole = "seller";
         await user.save();
       }
     } else if (action === "reject") {

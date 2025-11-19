@@ -7,6 +7,12 @@ import Image from 'next/image';
 import { ArrowLeft, CreditCard, Wallet, Building2, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 interface CheckoutItem {
   id: string;
   name: string;
@@ -22,8 +28,29 @@ function CheckoutContent() {
   
   const [items, setItems] = useState<CheckoutItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'netbanking'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [purchaseMode, setPurchaseMode] = useState<'cart' | 'direct'>('cart');
+  const [shippingAddress, setShippingAddress] = useState({
+    street: '123 Main Street, Apartment 4B',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    zipCode: '400001',
+    phone: '+91 1234567890'
+  });
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -37,6 +64,8 @@ function CheckoutContent() {
       const quantity = parseInt(searchParams.get('quantity') || '1');
 
       if (productId) {
+        // Direct purchase mode
+        setPurchaseMode('direct');
         // Fetch actual product data from API
         fetch(`/api/products/${productId}`)
           .then(res => res.json())
@@ -57,6 +86,8 @@ function CheckoutContent() {
             router.push('/');
           });
       } else {
+        // Cart purchase mode
+        setPurchaseMode('cart');
         // If no productId, try to fetch from cart
         fetch('/api/cart')
           .then(res => res.json())
@@ -70,6 +101,9 @@ function CheckoutContent() {
                 quantity: item.quantity
               }));
               setItems(checkoutItems);
+            } else {
+              toast.error('Your cart is empty');
+              router.push('/');
             }
             setLoading(false);
           })
@@ -90,32 +124,154 @@ function CheckoutContent() {
     setProcessingPayment(true);
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Clear the cart after successful payment
-      const response = await fetch('/api/cart', {
-        method: 'DELETE',
-      });
+      if (paymentMethod === 'cod') {
+        // Process Cash on Delivery
+        const requestBody: any = {
+          shippingAddress,
+          paymentMethod: 'cod'
+        };
 
-      if (response.ok) {
-        // Dispatch event to update cart count in navbar
-        window.dispatchEvent(new Event('cartUpdated'));
-        
-        // Show success message
-        toast.success('🎉 Payment Successful! Your order has been placed.');
-        
-        // Redirect to home after a short delay
-        setTimeout(() => {
-          router.push('/');
-        }, 1500);
+        // If direct purchase, include items data
+        if (purchaseMode === 'direct') {
+          requestBody.items = items.map(item => ({
+            productId: item.id,
+            quantity: item.quantity
+          }));
+        }
+
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setProcessingPayment(false);
+          setOrderConfirmed(true);
+          setOrderDetails(data.orders);
+          toast.success('✅ Order Confirmed! You will pay on delivery.', { duration: 4000 });
+          if (data.orders && data.orders.length > 0) {
+            toast.success(`📦 Order ID: ${data.orders[0].orderId.toString().slice(-8).toUpperCase()}`, { duration: 5000 });
+          }
+          window.dispatchEvent(new Event('cartUpdated'));
+          setTimeout(() => {
+            router.push('/');
+          }, 4000);
+        } else {
+          setProcessingPayment(false);
+          toast.error(data.error || 'Order failed. Please try again.');
+        }
       } else {
-        toast.error('Payment successful but failed to clear cart. Please refresh the page.');
+        // Process Razorpay Payment
+        const response = await fetch('/api/payment/create-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: total,
+            shippingAddress
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          toast.error(data.error || 'Failed to initiate payment');
+          setProcessingPayment(false);
+          return;
+        }
+
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: data.amount,
+          currency: data.currency,
+          name: 'Deligo',
+          description: 'Order Payment',
+          order_id: data.razorpayOrderId,
+          handler: async function (response: any) {
+            try {
+              // Verify payment and create order
+              const verifyBody: any = {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                shippingAddress
+              };
+
+              // If direct purchase, include items data
+              if (purchaseMode === 'direct') {
+                verifyBody.items = items.map(item => ({
+                  productId: item.id,
+                  quantity: item.quantity
+                }));
+              }
+
+              const verifyResponse = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(verifyBody),
+              });
+
+              const verifyData = await verifyResponse.json();
+
+              if (verifyResponse.ok) {
+                // Show success messages
+                setOrderConfirmed(true);
+                setOrderDetails(verifyData.orders);
+                toast.success('✅ Payment Successful!', { duration: 3000 });
+                toast.success('📦 Order Confirmed!', { duration: 4000 });
+                
+                // Show order details if available
+                if (verifyData.orders && verifyData.orders.length > 0) {
+                  const orderId = verifyData.orders[0].orderId.toString().slice(-8).toUpperCase();
+                  const trackingNumber = verifyData.orders[0].trackingNumber;
+                  toast.success(`Order ID: ${orderId}`, { duration: 5000 });
+                  toast.success(`Tracking: ${trackingNumber}`, { duration: 5000 });
+                }
+                
+                window.dispatchEvent(new Event('cartUpdated'));
+                setTimeout(() => {
+                  router.push('/');
+                }, 4000);
+              } else {
+                toast.error(verifyData.error || 'Payment verification failed');
+              }
+            } catch (error) {
+              console.error('Payment verification error:', error);
+              toast.error('Payment verification failed');
+            } finally {
+              setProcessingPayment(false);
+            }
+          },
+          prefill: {
+            name: session?.user?.name || '',
+            email: session?.user?.email || '',
+            contact: shippingAddress.phone
+          },
+          theme: {
+            color: '#16a34a'
+          },
+          modal: {
+            ondismiss: function() {
+              setProcessingPayment(false);
+              toast.error('Payment cancelled');
+            }
+          }
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
       }
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Payment failed. Please try again.');
-    } finally {
       setProcessingPayment(false);
     }
   };
@@ -208,15 +364,15 @@ function CheckoutContent() {
                   <input
                     type="radio"
                     name="payment"
-                    value="card"
-                    checked={paymentMethod === 'card'}
-                    onChange={(e) => setPaymentMethod(e.target.value as 'card')}
+                    value="razorpay"
+                    checked={paymentMethod === 'razorpay'}
+                    onChange={(e) => setPaymentMethod(e.target.value as 'razorpay')}
                     className="w-4 h-4 text-green-600"
                   />
                   <CreditCard size={24} className="text-gray-600" />
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-800">Credit / Debit Card</p>
-                    <p className="text-sm text-gray-600">Pay securely with your card</p>
+                    <p className="font-semibold text-gray-800">Razorpay (UPI, Cards, Wallets)</p>
+                    <p className="text-sm text-gray-600">Pay securely via Razorpay</p>
                   </div>
                 </label>
 
@@ -224,31 +380,15 @@ function CheckoutContent() {
                   <input
                     type="radio"
                     name="payment"
-                    value="upi"
-                    checked={paymentMethod === 'upi'}
-                    onChange={(e) => setPaymentMethod(e.target.value as 'upi')}
+                    value="cod"
+                    checked={paymentMethod === 'cod'}
+                    onChange={(e) => setPaymentMethod(e.target.value as 'cod')}
                     className="w-4 h-4 text-green-600"
                   />
                   <Wallet size={24} className="text-gray-600" />
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-800">UPI</p>
-                    <p className="text-sm text-gray-600">Pay via UPI apps</p>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="netbanking"
-                    checked={paymentMethod === 'netbanking'}
-                    onChange={(e) => setPaymentMethod(e.target.value as 'netbanking')}
-                    className="w-4 h-4 text-green-600"
-                  />
-                  <Building2 size={24} className="text-gray-600" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800">Net Banking</p>
-                    <p className="text-sm text-gray-600">Pay through your bank</p>
+                    <p className="font-semibold text-gray-800">Cash on Delivery</p>
+                    <p className="text-sm text-gray-600">Pay when you receive</p>
                   </div>
                 </label>
               </div>
@@ -322,6 +462,58 @@ function CheckoutContent() {
           </div>
         </div>
       </div>
+
+      {/* Order Confirmation Overlay */}
+      {orderConfirmed && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center animate-[fadeIn_0.3s_ease-in-out]">
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h2>
+              <p className="text-gray-600">Thank you for your purchase</p>
+            </div>
+
+            {orderDetails && orderDetails.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Order ID:</span>
+                  <span className="font-semibold text-gray-900">
+                    {orderDetails[0].orderId.toString().slice(-8).toUpperCase()}
+                  </span>
+                </div>
+                {orderDetails[0].trackingNumber && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tracking Number:</span>
+                    <span className="font-semibold text-gray-900">
+                      {orderDetails[0].trackingNumber}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Total Amount:</span>
+                  <span className="font-bold text-green-600">
+                    ₹{orderDetails[0].totalAmount?.toFixed(2) || total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-500 mb-6">
+              You will receive an email confirmation shortly. Redirecting to home...
+            </p>
+
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
