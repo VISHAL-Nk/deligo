@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
       totalCartAmount += itemPrice * item.quantity;
     }
 
-    // Create payment record
+    // Create initial payment record without orderId (will be updated with orders)
     const payment = await Payment.create({
       userId: session.user.id,
       amount: totalCartAmount + (totalCartAmount * 0.05) + 40, // Add tax and shipping
@@ -128,9 +128,11 @@ export async function POST(req: NextRequest) {
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
+      // orderId will be set to the first order, or can remain null for multi-order payments
     });
 
     const createdOrders = [];
+    let firstOrderId = null;
 
     // Create separate orders for each seller
     for (const [sellerId, items] of sellerGroups) {
@@ -204,6 +206,13 @@ export async function POST(req: NextRequest) {
       // Update order with shipment ID
       order.shipmentId = shipment._id;
       await order.save();
+
+      // Link the first order to the payment
+      if (!firstOrderId) {
+        firstOrderId = order._id;
+        payment.orderId = firstOrderId;
+        await payment.save();
+      }
 
       // Create notification for seller
       await Notification.create({

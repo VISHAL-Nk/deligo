@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Session } from "@/lib/Session";
 import { dbConnect } from "@/lib/db";
 import Order from "@/models/Orders.models";
-import Admin from "@/models/Admins.models";
 
 // GET /api/admin/orders - Get all orders
 export async function GET(req: NextRequest) {
@@ -15,7 +14,7 @@ export async function GET(req: NextRequest) {
     await dbConnect();
 
     // Check if user is admin
-    const admin = await Admin.findOne({ userId: session.user.id });
+    const admin = session?.user?.role === "admin";
     if (!admin) {
       return NextResponse.json(
         { error: "Access denied. Admin only." },

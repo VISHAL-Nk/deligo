@@ -24,6 +24,7 @@ const PaymentSchema = new mongoose.Schema(
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
+      // Removed unique index - one payment can be used for multiple orders
     },
     paymentMethod: { 
       type: String, 
@@ -32,8 +33,8 @@ const PaymentSchema = new mongoose.Schema(
     },
     provider: { type: String }, // e.g., Razorpay, Stripe, etc.
     transactionId: { type: String },
-    razorpayOrderId: { type: String },
-    razorpayPaymentId: { type: String },
+    razorpayOrderId: { type: String, sparse: true }, // sparse allows multiple null values
+    razorpayPaymentId: { type: String, sparse: true },
     razorpaySignature: { type: String },
     status: {
       type: String,
@@ -45,6 +46,9 @@ const PaymentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Ensure no unique index on orderId
+PaymentSchema.index({ orderId: 1 }, { unique: false });
 
 const Payment =
   mongoose.models?.Payment || mongoose.model("Payment", PaymentSchema);
