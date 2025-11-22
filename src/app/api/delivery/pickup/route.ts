@@ -4,6 +4,7 @@ import { dbConnect } from "@/lib/db";
 import Shipment from "@/models/Shipments.models";
 import Order from "@/models/Orders.models";
 import Notification from "@/models/Notifications.models";
+import DeliveryProfile from "@/models/DeliveryProfiles.models";
 
 // Mark parcel as picked up
 export async function POST(req: NextRequest) {
@@ -17,6 +18,18 @@ export async function POST(req: NextRequest) {
 
     const { shipmentId, location } = await req.json();
 
+    // Get delivery profile
+    const deliveryProfile = await DeliveryProfile.findOne({ 
+      userId: session.user.id 
+    });
+
+    if (!deliveryProfile) {
+      return NextResponse.json(
+        { error: "Delivery profile not found" },
+        { status: 404 }
+      );
+    }
+
     const shipment = await Shipment.findById(shipmentId).populate("orderId");
     if (!shipment) {
       return NextResponse.json(
@@ -26,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify this shipment is assigned to this delivery person
-    if (shipment.deliveryPersonId?.toString() !== session.user.id) {
+    if (shipment.deliveryPersonId?.toString() !== deliveryProfile._id.toString()) {
       return NextResponse.json(
         { error: "This shipment is not assigned to you" },
         { status: 403 }
@@ -107,6 +120,18 @@ export async function PATCH(req: NextRequest) {
 
     const { shipmentId, location } = await req.json();
 
+    // Get delivery profile
+    const deliveryProfile = await DeliveryProfile.findOne({ 
+      userId: session.user.id 
+    });
+
+    if (!deliveryProfile) {
+      return NextResponse.json(
+        { error: "Delivery profile not found" },
+        { status: 404 }
+      );
+    }
+
     const shipment = await Shipment.findById(shipmentId).populate("orderId");
     if (!shipment) {
       return NextResponse.json(
@@ -116,7 +141,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Verify this shipment is assigned to this delivery person
-    if (shipment.deliveryPersonId?.toString() !== session.user.id) {
+    if (shipment.deliveryPersonId?.toString() !== deliveryProfile._id.toString()) {
       return NextResponse.json(
         { error: "This shipment is not assigned to you" },
         { status: 403 }

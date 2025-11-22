@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MapPin, Clock, Phone, Package, Navigation } from "lucide-react";
+import { MapPin, Clock, Phone, Package, Navigation, ArrowLeft } from "lucide-react";
 
 interface Shipment {
   _id: string;
@@ -18,7 +18,7 @@ interface Shipment {
   };
   estimatedDelivery: string;
   orderId: {
-    orderNumber: string;
+    _id: string;
     totalAmount: number;
   };
 }
@@ -111,10 +111,21 @@ export default function AssignmentsPage() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          My Deliveries
-        </h1>
-        <p className="text-gray-600 mt-1">Manage your delivery assignments</p>
+        <div className="flex items-center mb-4">
+          <Link
+            href="/driver"
+            className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-6 w-6 text-gray-600" />
+          </Link>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              My Deliveries
+            </h1>
+            <p className="text-gray-600 mt-1">Manage your delivery assignments</p>
+          </div>
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -175,7 +186,7 @@ export default function AssignmentsPage() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Order: {shipment.orderId?.orderNumber || "N/A"}
+                    Order: {shipment.orderId?._id ? `#${shipment.orderId._id.slice(-8).toUpperCase()}` : "N/A"}
                   </p>
                 </div>
                 <Link

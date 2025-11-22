@@ -4,12 +4,36 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { ArrowLeft, CreditCard, Wallet, Building2, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayOptions {
+  key?: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayResponse) => void;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
+  theme?: {
+    color?: string;
+  };
+}
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: new (options: RazorpayOptions) => { open: () => void };
   }
 }
 
@@ -31,9 +55,9 @@ function CheckoutContent() {
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
   const [processingPayment, setProcessingPayment] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [orderDetails, setOrderDetails] = useState<{ orderId: string; trackingNumber: string; totalAmount?: number }[] | null>(null);
   const [purchaseMode, setPurchaseMode] = useState<'cart' | 'direct'>('cart');
-  const [shippingAddress, setShippingAddress] = useState({
+  const [shippingAddress] = useState({
     street: '123 Main Street, Apartment 4B',
     city: 'Mumbai',
     state: 'Maharashtra',
@@ -119,14 +143,18 @@ function CheckoutContent() {
   const deliveryFee = subtotal >= 500 ? 0 : 50;
   const tax = Math.round(subtotal * 0.05); // 5% tax
   const total = subtotal + deliveryFee + tax;
-
+  
   const handlePayment = async () => {
     setProcessingPayment(true);
 
     try {
       if (paymentMethod === 'cod') {
         // Process Cash on Delivery
-        const requestBody: any = {
+        const requestBody: {
+          shippingAddress: typeof shippingAddress;
+          paymentMethod: string;
+          items?: { productId: string; quantity: number }[];
+        } = {
           shippingAddress,
           paymentMethod: 'cod'
         };
@@ -193,10 +221,16 @@ function CheckoutContent() {
           name: 'Deligo',
           description: 'Order Payment',
           order_id: data.razorpayOrderId,
-          handler: async function (response: any) {
+          handler: async function (response: RazorpayResponse) {
             try {
               // Verify payment and create order
-              const verifyBody: any = {
+              const verifyBody: {
+                razorpay_order_id: string;
+                razorpay_payment_id: string;
+                razorpay_signature: string;
+                shippingAddress: typeof shippingAddress;
+                items?: { productId: string; quantity: number }[];
+              } = {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
@@ -344,6 +378,7 @@ function CheckoutContent() {
               <h2 className="text-xl font-bold text-gray-800 mb-4">Delivery Address</h2>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="font-semibold text-gray-800">{session?.user?.name || 'User'}</p>
+                
                 <p className="text-gray-600 text-sm mt-2">
                   123 Main Street, Apartment 4B<br />
                   Mumbai, Maharashtra 400001<br />

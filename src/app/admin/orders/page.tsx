@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { 
   Package, 
-  Filter, 
   Search,
-  Eye,
   Truck,
   CheckCircle,
   XCircle,
@@ -38,7 +36,13 @@ interface Order {
   }>;
   status: string;
   totalAmount: number;
-  shippingAddress: any;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    phone?: string;
+  };
   shipmentId?: {
     trackingNumber: string;
     status: string;
@@ -48,7 +52,7 @@ interface Order {
 }
 
 const AdminOrdersPage = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,18 +68,7 @@ const AdminOrdersPage = () => {
     cancelled: 0,
   });
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-      return;
-    }
-
-    if (status === 'authenticated') {
-      fetchOrders();
-    }
-  }, [status, selectedStatus]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const url = `/api/admin/orders?status=${selectedStatus}`;
@@ -94,7 +87,18 @@ const AdminOrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStatus]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (status === 'authenticated') {
+      fetchOrders();
+    }
+  }, [status, router, fetchOrders]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

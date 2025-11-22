@@ -10,7 +10,6 @@ import {
   BarChart3,
   Star,
   Boxes,
-  FileText,
   Settings,
   Menu,
   X,

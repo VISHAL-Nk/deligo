@@ -77,13 +77,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Assign shipment to this delivery person
-    shipment.deliveryPersonId = session.user.id;
-    shipment.status = "assigned";
+    // Assign shipment to this delivery person (use deliveryProfile._id for consistency)
+    shipment.deliveryPersonId = deliveryProfile._id;
+    shipment.status = "accepted"; // Set to accepted so it shows in pending deliveries
     shipment.events.push({
-      status: "assigned",
+      status: "accepted",
       timestamp: new Date(),
-      note: `Assigned to delivery person ${deliveryProfile.firstName} ${deliveryProfile.lastName}`
+      note: `Accepted by delivery person ${deliveryProfile.firstName} ${deliveryProfile.lastName}`
     });
 
     await shipment.save();

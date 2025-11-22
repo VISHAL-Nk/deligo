@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Upload, FileSpreadsheet, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 

@@ -25,12 +25,18 @@ export async function GET() {
       );
     }
 
-    // Get all shipments assigned to this delivery person
+    // Get all shipments assigned to this delivery person (using deliveryProfile._id)
     const shipments = await Shipment.find({
-      deliveryPersonId: session.user.id,
+      deliveryPersonId: deliveryProfile._id,
       status: { $in: ["assigned", "accepted", "picked_up", "in-transit"] }
     })
-      .populate("orderId")
+      .populate({
+        path: "orderId",
+        populate: {
+          path: "items.productId",
+          select: "name images price"
+        }
+      })
       .sort({ createdAt: -1 });
 
     return NextResponse.json({
@@ -73,8 +79,19 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const deliveryProfile = await DeliveryProfile.findOne({ 
+      userId: session.user.id 
+    });
+
+    if (!deliveryProfile) {
+      return NextResponse.json(
+        { error: "Delivery profile not found" },
+        { status: 404 }
+      );
+    }
+
     // Verify this shipment is assigned to this delivery person
-    if (shipment.deliveryPersonId?.toString() !== session.user.id) {
+    if (shipment.deliveryPersonId?.toString() !== deliveryProfile._id.toString()) {
       return NextResponse.json(
         { error: "This shipment is not assigned to you" },
         { status: 403 }

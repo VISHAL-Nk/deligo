@@ -112,6 +112,17 @@ export default withAuth(async function middleware(req) {
     return NextResponse.next();
   }
 
+  // Handle home page - redirect verified users without profile to complete profile
+  if (pathname === "/") {
+    if (user?.isVerified) {
+      const hasProfile = user.hasProfile || false;
+      if (!hasProfile) {
+        return NextResponse.redirect(new URL("/auth/complete-profile", req.url));
+      }
+    }
+    return NextResponse.next();
+  }
+
   // Handle complete profile page
   if (pathname === "/auth/complete-profile") {
     console.log("Complete profile page - user verification:", user?.isVerified);
@@ -131,6 +142,16 @@ export default withAuth(async function middleware(req) {
     // If verified but no profile, stay on complete profile page
     console.log("User verified but no profile, staying on complete profile page");
     return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/checkout")) {
+    const hasProfile = user.hasProfile || false;
+      
+    if (!hasProfile) {
+      const profileUrl = new URL("/auth/complete-profile", req.url);
+      profileUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(profileUrl);
+    }
   }
 
   // Handle protected routes - only cart and checkout require authentication
@@ -237,6 +258,7 @@ export default withAuth(async function middleware(req) {
 // Apply middleware to protected routes, auth pages, and API routes
 export const config = {
   matcher: [
+    "/",
     "/cart/:path*",
     "/checkout/:path*",
     "/orders/:path*",

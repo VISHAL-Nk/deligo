@@ -47,7 +47,6 @@ export default function InventoryPage() {
       // Check if responses are ok before parsing JSON
       const parseJSON = async (response: Response, defaultValue: unknown = null) => {
         if (!response.ok) {
-          console.error(`API error: ${response.status} ${response.statusText}`);
           return { success: false, data: defaultValue };
         }
         try {

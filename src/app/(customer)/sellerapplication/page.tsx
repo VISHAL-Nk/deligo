@@ -200,9 +200,18 @@ export default function SellerApplicationPage() {
             <p className="text-sm font-semibold text-red-900 mb-2">Rejection Reason:</p>
             <p className="text-sm text-red-800">{rejectedReason}</p>
           </div>
-          <p className="text-sm text-gray-500">
-            If you believe this is a mistake, please contact our support team.
+          <p className="text-sm text-gray-500 mb-6">
+            You can address the issues mentioned above and submit a new application.
           </p>
+          <button
+            onClick={() => {
+              setApplicationStatus(0);
+              setRejectedReason('');
+            }}
+            className="w-full bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+          >
+            Apply Again
+          </button>
         </div>
       </div>
     );

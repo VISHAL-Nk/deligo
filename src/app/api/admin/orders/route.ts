@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build query
-    const query: any = {};
+    const query: { status?: string } = {};
     if (status && status !== "all") {
       query.status = status;
     }

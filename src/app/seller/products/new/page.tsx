@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Upload, X, Plus, Minus, Save, ArrowLeft } from 'lucide-react';
+import { Upload, X, Save, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface Category {
@@ -11,13 +11,13 @@ interface Category {
   name: string;
 }
 
-interface Variant {
-  name: string;
-  sku: string;
-  price: number;
-  stock: number;
-  attributes: Record<string, string>;
-}
+// interface Variant {
+//   name: string;
+//   sku: string;
+//   price: number;
+//   stock: number;
+//   attributes: Record<string, string>;
+// }
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -25,7 +25,6 @@ export default function NewProductPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [variants, setVariants] = useState<Variant[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -85,22 +84,22 @@ export default function NewProductPage() {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addVariant = () => {
-    setVariants([
-      ...variants,
-      { name: '', sku: '', price: 0, stock: 0, attributes: {} },
-    ]);
-  };
+  // const addVariant = () => {
+  //   setVariants([
+  //     ...variants,
+  //     { name: '', sku: '', price: 0, stock: 0, attributes: {} },
+  //   ]);
+  // };
 
-  const removeVariant = (index: number) => {
-    setVariants(variants.filter((_, i) => i !== index));
-  };
+  // const removeVariant = (index: number) => {
+  //   setVariants(variants.filter((_, i) => i !== index));
+  // };
 
-  const updateVariant = (index: number, field: keyof Variant, value: string | number | Record<string, string>) => {
-    const updated = [...variants];
-    updated[index] = { ...updated[index], [field]: value };
-    setVariants(updated);
-  };
+  // const updateVariant = (index: number, field: keyof Variant, value: string | number | Record<string, string>) => {
+  //   const updated = [...variants];
+  //   updated[index] = { ...updated[index], [field]: value };
+  //   setVariants(updated);
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,9 +124,9 @@ export default function NewProductPage() {
       formDataToSend.append('lowStockThreshold', formData.lowStockThreshold);
       formDataToSend.append('status', formData.status);
       
-      if (variants.length > 0) {
-        formDataToSend.append('variants', JSON.stringify(variants));
-      }
+      // if (variants.length > 0) {
+      //   formDataToSend.append('variants', JSON.stringify(variants));
+      // }
 
       formDataToSend.append('seo', JSON.stringify(formData.seo));
 

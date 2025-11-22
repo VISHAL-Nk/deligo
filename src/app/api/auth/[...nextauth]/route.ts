@@ -176,19 +176,18 @@ export const authOptions = {
           fullName: user.name || "",
         });
 
-        // If we have a name from OAuth, we can consider the profile as having basic info
-        if (user.name) {
-          existingUser.hasProfile = true;
-          await existingUser.save();
-        }
+        // Don't automatically set hasProfile to true for OAuth users
+        // They still need to complete their profile with phone, gender, etc.
       } else {
-        // Check if existing user has a profile
+        // Check if existing user has a complete profile
         const existingProfile = await UserProfile.findOne({
           userId: existingUser._id,
         });
         if (existingProfile && !existingUser.hasProfile) {
-          // User has a profile but hasProfile is false, update it
-          existingUser.hasProfile = true;
+          // Check if profile has essential fields (phone and dateOfBirth)
+          if (existingProfile.phone && existingProfile.dateOfBirth) {
+            existingUser.hasProfile = true;
+          }
         }
       }
 

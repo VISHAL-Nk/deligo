@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { TrendingUp, Calendar, DollarSign, Download } from "lucide-react";
 
 interface Earning {
@@ -66,12 +67,12 @@ export default function EarningsPage() {
     const amount = parseFloat(payoutAmount);
 
     if (!amount || amount <= 0) {
-      alert("Please enter a valid amount");
+      toast.error("Please enter a valid amount");
       return;
     }
 
     if (summary && amount > summary.pendingEarnings) {
-      alert("Insufficient balance");
+      toast.error("Insufficient balance");
       return;
     }
 
@@ -83,17 +84,17 @@ export default function EarningsPage() {
       });
 
       if (res.ok) {
-        alert("Payout request submitted successfully!");
+        toast.success("Payout request submitted successfully!");
         setShowPayoutModal(false);
         setPayoutAmount("");
         fetchEarnings();
       } else {
         const data = await res.json();
-        alert(data.message || "Failed to request payout");
+        toast.error(data.message || "Failed to request payout");
       }
     } catch (error) {
       console.error("Error requesting payout:", error);
-      alert("Failed to request payout");
+      toast.error("Failed to request payout");
     }
   };
 

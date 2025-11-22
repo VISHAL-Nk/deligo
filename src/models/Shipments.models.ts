@@ -22,6 +22,10 @@
 
 import mongoose from "mongoose";
 
+// Import Order model to ensure it's registered before Shipment model uses it
+import "./Orders.models";
+import "./DeliveryProfiles.models";
+
 const ShipmentSchema = new mongoose.Schema(
   {
     orderId: {

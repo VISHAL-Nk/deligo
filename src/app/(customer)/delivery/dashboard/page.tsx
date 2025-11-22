@@ -2,25 +2,9 @@
 
 "use client";
 
-import { useSession } from "next-auth/react";
 import { Truck, Package, CheckCircle, Clock, MapPin, Navigation } from "lucide-react";
-import type { Session } from "next-auth";
-
-interface ExtendedSession extends Session {
-  user: {
-    id: string;
-    email: string;
-    role: "customer" | "seller" | "delivery" | "support" | "admin";
-    isVerified: boolean;
-    hasProfile: boolean;
-    name: string | null;
-    image?: string | null;
-  };
-}
 
 export default function DeliveryDashboardPage() {
-  const { data: session } = useSession();
-  const extendedSession = session as ExtendedSession | null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">

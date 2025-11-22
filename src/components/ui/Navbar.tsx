@@ -35,6 +35,7 @@ const Navbar = () => {
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
     const [cartCount, setCartCount] = useState(0);
+    const [userName, setUserName] = useState<string>('User');
     
     const router = useRouter();
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,7 +45,7 @@ const Navbar = () => {
     // Debounce search suggestions
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-    // Fetch cart count when user is authenticated
+    // Fetch cart count and user name when user is authenticated
     useEffect(() => {
         const fetchCartCount = () => {
             if (session.status === 'authenticated') {
@@ -61,7 +62,26 @@ const Navbar = () => {
             }
         };
 
+        const fetchUserName = async () => {
+            if (session.status === 'authenticated') {
+                try {
+                    const response = await fetch('/api/user/profile/name');
+                    const data = await response.json();
+                    if (data.success && data.name) {
+                        setUserName(data.name);
+                    }
+                } catch (error) {
+                    console.error('Error fetching user name:', error);
+                    // Fallback to email username if available
+                    setUserName(session.data?.user?.email?.split('@')[0] || 'User');
+                }
+            } else {
+                setUserName('User');
+            }
+        };
+
         fetchCartCount();
+        fetchUserName();
 
         // Listen for cart updates
         window.addEventListener('cartUpdated', fetchCartCount);
@@ -69,7 +89,7 @@ const Navbar = () => {
         return () => {
             window.removeEventListener('cartUpdated', fetchCartCount);
         };
-    }, [session.status]);
+    }, [session.status, session.data?.user?.email]);
 
     const fetchSearchSuggestions = useCallback(async (query: string) => {
         if (!query.trim() || query.length < 2) {
@@ -420,7 +440,7 @@ const Navbar = () => {
                             >
                                 <User size={16} />
                                 <span className="hidden sm:inline">
-                                    {session.data.user?.name || 'User'}
+                                    {userName}
                                 </span>
                                 <ChevronDown 
                                     size={14} 

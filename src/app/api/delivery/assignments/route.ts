@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const shipments = await Shipment.find(query)
       .populate({
         path: "orderId",
-        select: "orderNumber totalAmount items",
+        select: "_id totalAmount items status",
       })
       .sort({ createdAt: -1 })
       .limit(50);

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { dbConnect } from "@/lib/db";
@@ -6,7 +6,7 @@ import Shipment from "@/models/Shipments.models";
 import DeliveryProfile from "@/models/DeliveryProfiles.models";
 
 // GET /api/delivery/available - Get available shipments for delivery
-export async function GET(request: NextRequest) {
+export async function GET() {
   await dbConnect();
 
   try {

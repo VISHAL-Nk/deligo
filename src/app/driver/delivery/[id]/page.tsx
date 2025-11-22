@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   MapPin,
   Phone,
@@ -30,7 +31,7 @@ interface Shipment {
     zipCode: string;
   };
   orderId: {
-    orderNumber: string;
+    _id: string;
     totalAmount: number;
   };
 }
@@ -42,9 +43,6 @@ export default function DeliveryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [otpInput, setOtpInput] = useState("");
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [showProofModal, setShowProofModal] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -79,21 +77,21 @@ export default function DeliveryDetailPage() {
       });
 
       if (res.ok) {
-        alert(`Status updated to ${newStatus}`);
+        toast.success(`Status updated to ${newStatus}`);
         fetchShipment();
       } else {
         const data = await res.json();
-        alert(data.message || "Failed to update status");
+        toast.error(data.message || "Failed to update status");
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 
   const verifyOTP = async () => {
     if (!otpInput || otpInput.length !== 6) {
-      alert("Please enter a valid 6-digit OTP");
+      toast.error("Please enter a valid 6-digit OTP");
       return;
     }
 
@@ -101,99 +99,24 @@ export default function DeliveryDetailPage() {
       const res = await fetch(`/api/delivery/shipments/${params.id}/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otpCode: otpInput }),
+        body: JSON.stringify({ otp: otpInput }),
       });
 
       if (res.ok) {
-        alert("Delivery verified successfully!");
+        toast.success("Delivery verified successfully!");
         setShowOtpModal(false);
         router.push("/driver/assignments");
       } else {
         const data = await res.json();
-        alert(data.message || "Invalid OTP");
+        toast.error(data.message || "Invalid OTP");
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      alert("Failed to verify OTP");
+      toast.error("Failed to verify OTP");
     }
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      setIsDrawing(true);
-    }
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    }
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-  };
-
-  const saveSignature = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const signatureData = canvas.toDataURL();
-
-    // Upload proof
-    try {
-      const res = await fetch(`/api/delivery/shipments/${params.id}/proof`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          signature: signatureData,
-          images: [],
-        }),
-      });
-
-      if (res.ok) {
-        alert("Signature saved!");
-        setShowProofModal(false);
-        setShowOtpModal(true);
-      } else {
-        alert("Failed to save signature");
-      }
-    } catch (error) {
-      console.error("Error saving signature:", error);
-      alert("Failed to save signature");
-    }
-  };
 
   if (loading) {
     return (
@@ -222,7 +145,7 @@ export default function DeliveryDetailPage() {
               {shipment.trackingNumber}
             </h1>
             <p className="text-sm text-gray-600">
-              Order: {shipment.orderId?.orderNumber}
+              Order: {shipment.orderId?._id ? `#${shipment.orderId._id.slice(-8).toUpperCase()}` : "N/A"}
             </p>
           </div>
           <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
@@ -245,7 +168,7 @@ export default function DeliveryDetailPage() {
             3. Start transit to customer
           </li>
           <li className={shipment.status === "in-transit" ? "font-semibold text-green-600" : ""}>
-            4. Get customer signature & enter OTP to complete delivery
+            4. Enter OTP from customer to complete delivery
           </li>
         </ol>
       </div>
@@ -284,11 +207,11 @@ export default function DeliveryDetailPage() {
 
         {shipment.status === "in-transit" && (
           <button
-            onClick={() => setShowProofModal(true)}
+            onClick={() => setShowOtpModal(true)}
             className="col-span-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
           >
             <QrCode className="h-5 w-5 mr-2" />
-            Complete Delivery (Get Signature & OTP)
+            Complete Delivery (Enter OTP)
           </button>
         )}
       </div>
@@ -387,47 +310,7 @@ export default function DeliveryDetailPage() {
         </div>
       )}
 
-      {/* Signature Modal */}
-      {showProofModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Customer Signature</h3>
-            <p className="text-gray-600 mb-4">
-              Ask customer to sign below
-            </p>
-            <canvas
-              ref={canvasRef}
-              width={400}
-              height={200}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              className="border-2 border-gray-300 rounded-lg w-full cursor-crosshair mb-4"
-            />
-            <div className="flex space-x-3">
-              <button
-                onClick={clearSignature}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => setShowProofModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveSignature}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

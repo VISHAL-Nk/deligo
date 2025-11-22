@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    const { shippingAddress, paymentMethod, items: directItems } = await req.json();
+    const { shippingAddress, items: directItems } = await req.json();
 
     if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || 
         !shippingAddress.state || !shippingAddress.zipCode) {
@@ -34,12 +34,12 @@ export async function POST(req: NextRequest) {
     // Check if this is a direct purchase (items provided) or cart checkout
     if (directItems && directItems.length > 0) {
       // Direct purchase - get products from the provided items
-      const productIds = directItems.map((item: any) => item.productId);
+      const productIds = directItems.map((item: { productId: string; quantity: number }) => item.productId);
       const products = await Product.find({ _id: { $in: productIds } }).populate('sellerId');
       
       cartItems = {
-        items: directItems.map((item: any) => {
-          const product = products.find((p: any) => p._id.toString() === item.productId);
+        items: directItems.map((item: { productId: string; quantity: number }) => {
+          const product = products.find((p) => p._id.toString() === item.productId);
           return {
             productId: product,
             quantity: item.quantity

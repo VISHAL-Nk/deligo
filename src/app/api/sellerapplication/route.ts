@@ -28,10 +28,15 @@ export async function POST(req: NextRequest) {
         await dbConnect();
         const existing = await SellerProfile.findOne({ userId: session.user.id });
         if (existing) {
-            return new Response(JSON.stringify({ error: "Seller application already submitted" }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            // Allow reapplication if the previous application was rejected
+            if (existing.kycStatus === "rejected") {
+                await SellerProfile.findByIdAndDelete(existing._id);
+            } else {
+                return new Response(JSON.stringify({ error: "Seller application already submitted" }), {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
         }
     
         const newApplication = await SellerProfile.create({

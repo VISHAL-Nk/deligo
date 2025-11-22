@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { sellerId, action } = body;
+    const { sellerId, action, rejectionReason } = body;
 
     await dbConnect();
 
@@ -74,6 +74,7 @@ export async function PATCH(req: NextRequest) {
 
     if (action === "approve") {
       seller.kycStatus = "approved";
+      seller.rejectionReason = undefined; // Clear any previous rejection reason
       await seller.save();
       
       // Update the user's role in the User collection
@@ -83,7 +84,14 @@ export async function PATCH(req: NextRequest) {
         await user.save();
       }
     } else if (action === "reject") {
+      if (!rejectionReason || rejectionReason.trim() === "") {
+        return NextResponse.json(
+          { error: "Rejection reason is required" },
+          { status: 400 }
+        );
+      }
       seller.kycStatus = "rejected";
+      seller.rejectionReason = rejectionReason;
       await seller.save();
     }
 
