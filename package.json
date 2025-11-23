@@ -16,6 +16,7 @@
     "@types/papaparse": "^5.5.0",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
+    "@vercel/analytics": "^1.5.0",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.8.0",
