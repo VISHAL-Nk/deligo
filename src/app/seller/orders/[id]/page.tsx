@@ -176,7 +176,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   const subtotal = order.items.reduce((sum, item) => {
     const price = item.productId?.price || 0;
     const discount = item.productId?.discount || 0;
-    const finalPrice = price - (price * discount / 100);
+    const finalPrice = price - discount;
     return sum + (finalPrice * item.quantity);
   }, 0);
 
@@ -318,7 +318,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             {order.items.map((item, idx) => {
               const price = item.productId?.price || 0;
               const discount = item.productId?.discount || 0;
-              const finalPrice = price - (price * discount / 100);
+              const finalPrice = price - discount;
               return (
                 <div key={idx} className="flex gap-4 pb-4 border-b last:border-b-0">
                   {item.productId?.images?.[0] && (

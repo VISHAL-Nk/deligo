@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         product: product
       });
 
-      const itemPrice = product.price - (product.price * product.discount / 100);
+      const itemPrice = product.price - product.discount;
       totalCartAmount += itemPrice * item.quantity;
     }
 
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       }
 
       const totalAmount = items.reduce((sum: number, item: CartItem) => {
-        const itemPrice = item.price - (item.price * item.discount / 100);
+        const itemPrice = item.price - item.discount;
         return sum + (itemPrice * item.quantity);
       }, 0);
 

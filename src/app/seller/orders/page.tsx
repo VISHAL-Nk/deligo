@@ -276,7 +276,7 @@ export default function OrdersPage() {
                         {order.items.map((item, idx) => {
                           const itemPrice = item.productId?.price || 0;
                           const itemDiscount = item.productId?.discount || 0;
-                          const finalPrice = itemPrice - (itemPrice * itemDiscount / 100);
+                          const finalPrice = itemPrice - itemDiscount;
                           return (
                             <div key={idx} className="flex items-center gap-4 py-2">
                               <div className="text-sm text-gray-700 flex-1">
