@@ -5,6 +5,8 @@ declare global {
         conn:Connection | null;
         promise:Promise<Connection> | null;
     }
-};
+}
+
+declare module '*.css';
 
 export {};
