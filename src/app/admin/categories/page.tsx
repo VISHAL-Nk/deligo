@@ -319,9 +319,33 @@ export default function CategoriesPage() {
 
         {/* Categories List */}
         {loading ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading categories...</p>
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            {/* Table header skeleton */}
+            <div className="bg-gray-50 p-4 border-b flex gap-4">
+              <div className="h-4 bg-gray-200 rounded w-32 skeleton-shimmer"></div>
+              <div className="h-4 bg-gray-200 rounded w-28 skeleton-shimmer"></div>
+              <div className="h-4 bg-gray-200 rounded w-40 skeleton-shimmer"></div>
+              <div className="h-4 bg-gray-200 rounded w-24 skeleton-shimmer"></div>
+            </div>
+            {/* Table rows skeleton */}
+            {[1, 2, 3, 4, 5].map(row => (
+              <div key={row} className="p-4 border-b flex gap-4 items-center">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg skeleton-shimmer"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-32 skeleton-shimmer"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24 skeleton-shimmer"></div>
+                </div>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map(tag => (
+                    <div key={tag} className="h-6 bg-gray-200 rounded-full w-16 skeleton-shimmer"></div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-8 w-8 bg-gray-200 rounded skeleton-shimmer"></div>
+                  <div className="h-8 w-8 bg-gray-200 rounded skeleton-shimmer"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredCategories.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm">

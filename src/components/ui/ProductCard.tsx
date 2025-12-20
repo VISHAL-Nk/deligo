@@ -145,10 +145,14 @@ const ProductCard = ({ product }: { product: Product }) => {
           src={product.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png'}
           width={200}
           height={200}
-          priority
+          loading="lazy"
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEEAQQDAAAAAAAAAAAAAQIDAAQFESExBhITQWGx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQACAwEAAAAAAAAAAAAAAAABAgADESH/2gAMAwEAAhEDEEA/ANHsOodVjrWO2t7iQRRqFQF2J0PAHT6qfc9U5e7uZZ5rm4eSVizs1w+yT+YpSlPZdYNwf//Z"
           alt={product.name}
           className={`w-full h-full object-cover hover:scale-105 transition-transform ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
         />
+        
       </Link>
       
       <Link href={`/products/${product._id}`} className="hover:text-green-600 transition-colors">

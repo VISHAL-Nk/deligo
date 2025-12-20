@@ -1,6 +1,7 @@
 import { dbConnect } from "@/lib/db";
 import { Session } from "@/lib/Session";
 import Review from "@/models/Reviews.models";
+import UserProfile from "@/models/UserProfiles.models";
 
 // GET - Fetch reviews for a product
 export async function GET(request: Request) {
@@ -15,9 +16,29 @@ export async function GET(request: Request) {
     await dbConnect();
 
     const reviews = await Review.find({ productId })
-      .populate('userId', 'name email')
+      .populate('userId', 'email')
       .sort({ createdAt: -1 })
       .lean();
+
+    // Fetch user profiles for all reviewers to get their names
+    const userIds = reviews.map((r: { userId?: { _id?: string } }) => r.userId?._id).filter(Boolean);
+    const userProfiles = await UserProfile.find({ userId: { $in: userIds } })
+      .select('userId fullName')
+      .lean();
+
+    // Create a map of userId to fullName
+    const profileMap = new Map(
+      userProfiles.map((p: { userId: { toString: () => string }; fullName?: string }) => [p.userId.toString(), p.fullName])
+    );
+
+    // Add name to each review
+    const reviewsWithNames = reviews.map((review: { userId?: { _id?: { toString: () => string }; email?: string }; rating: number; comment?: string; images?: string[]; createdAt: Date; _id: string }) => ({
+      ...review,
+      userId: {
+        ...review.userId,
+        name: review.userId?._id ? profileMap.get(review.userId._id.toString()) || 'Anonymous' : 'Anonymous',
+      },
+    }));
 
     // Calculate average rating
     const avgRating = reviews.length > 0
@@ -25,7 +46,7 @@ export async function GET(request: Request) {
       : 0;
 
     return new Response(JSON.stringify({ 
-      reviews, 
+      reviews: reviewsWithNames, 
       avgRating: avgRating.toFixed(1),
       totalReviews: reviews.length 
     }), { status: 200 });

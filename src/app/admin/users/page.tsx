@@ -77,11 +77,26 @@ export default function UsersPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-white">
-          <div className="text-center">
-            <RefreshCw className="mx-auto h-8 w-8 animate-spin text-green-600" />
-            <p className="mt-2 text-sm text-gray-600 sm:text-base">Loading users...</p>
+        <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+          {/* Table header skeleton */}
+          <div className="bg-gray-50 p-4 border-b flex gap-4">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="h-4 bg-gray-200 rounded w-24 skeleton-shimmer"></div>
+            ))}
           </div>
+          {/* Table rows skeleton */}
+          {[1, 2, 3, 4, 5].map(row => (
+            <div key={row} className="p-4 border-b flex gap-4 items-center">
+              <div className="w-10 h-10 bg-gray-200 rounded-full skeleton-shimmer"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-32 skeleton-shimmer"></div>
+                <div className="h-3 bg-gray-200 rounded w-48 skeleton-shimmer"></div>
+              </div>
+              <div className="h-6 bg-gray-200 rounded w-16 skeleton-shimmer"></div>
+              <div className="h-6 bg-gray-200 rounded w-20 skeleton-shimmer"></div>
+              <div className="h-8 bg-gray-200 rounded w-24 skeleton-shimmer"></div>
+            </div>
+          ))}
         </div>
       ) : users.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white">

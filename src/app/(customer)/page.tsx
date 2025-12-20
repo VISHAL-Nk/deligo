@@ -70,14 +70,17 @@ const ProductsSkeleton = () => {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-           className="border rounded-xl shadow-sm p-3 bg-white flex flex-col animate-pulse"
+          className="border rounded-xl shadow-sm p-3 bg-white flex flex-col"
         >
-          <div className="bg-gray-200 h-48 w-full rounded-md"></div>
-          <div className="mt-3 h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="mt-2 h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="bg-gray-200 h-48 w-full rounded-md skeleton-shimmer"></div>
+          <div className="mt-3 h-4 bg-gray-200 rounded w-3/4 skeleton-shimmer"></div>
+          <div className="mt-2 h-4 bg-gray-200 rounded w-1/2 skeleton-shimmer"></div>
           <div className="mt-4 flex justify-between items-center">
-            <div className="h-4 bg-gray-200 rounded w-12"></div>
-            <div className="h-6 bg-gray-200 rounded w-16"></div>
+            <div className="space-y-1">
+              <div className="h-5 bg-gray-200 rounded w-16 skeleton-shimmer"></div>
+              <div className="h-3 bg-gray-200 rounded w-12 skeleton-shimmer"></div>
+            </div>
+            <div className="h-8 bg-gray-200 rounded w-16 skeleton-shimmer"></div>
           </div>
         </div>
       ))}
@@ -163,6 +166,8 @@ const HeroSection = () => {
               width={400}
               height={400}
               className="w-full max-w-md rounded-lg shadow-lg"
+              priority
+              sizes="(max-width: 768px) 100vw, 400px"
             />
           </div>
         </div>
@@ -279,6 +284,8 @@ const LimitedTimeOffers = () => {
                       width={192}
                       height={128}
                       className="w-full h-32 object-cover rounded-lg"
+                      loading="lazy"
+                      sizes="192px"
                     />
                     <span className="absolute -top-2 -right-2 bg-red-500 text-black text-xs font-bold px-2 py-1 rounded shadow-md">
                       {offer.discount}

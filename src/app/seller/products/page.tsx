@@ -159,11 +159,19 @@ export default function ProductsPage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
-                <div className="aspect-square bg-gray-200"></div>
+              <div key={i} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="aspect-square bg-gray-200 skeleton-shimmer"></div>
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-4 bg-gray-200 rounded skeleton-shimmer"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 skeleton-shimmer"></div>
+                  <div className="flex items-center justify-between">
+                    <div className="h-5 bg-gray-200 rounded w-16 skeleton-shimmer"></div>
+                    <div className="h-4 bg-gray-200 rounded w-12 skeleton-shimmer"></div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <div className="h-10 bg-gray-200 rounded flex-1 skeleton-shimmer"></div>
+                    <div className="h-10 w-10 bg-gray-200 rounded skeleton-shimmer"></div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -192,6 +200,8 @@ export default function ProductsPage() {
                         alt={product.name}
                         fill
                         className="object-cover"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

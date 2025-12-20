@@ -153,14 +153,43 @@ const AdminOrdersPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+          <div className="space-y-4">
+            {/* Header skeleton */}
+            <div className="h-8 bg-gray-200 rounded w-1/4 skeleton-shimmer"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3 skeleton-shimmer"></div>
+            
+            {/* Stats skeleton */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-8">
+              {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                <div key={i} className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="h-3 bg-gray-200 rounded w-16 mb-2 skeleton-shimmer"></div>
+                  <div className="h-8 bg-gray-200 rounded w-12 skeleton-shimmer"></div>
+                </div>
               ))}
             </div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            
+            {/* Search bar skeleton */}
+            <div className="bg-white p-4 rounded-lg shadow-sm mt-6">
+              <div className="h-10 bg-gray-200 rounded skeleton-shimmer"></div>
+            </div>
+            
+            {/* Table skeleton */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="p-4 border-b">
+                <div className="flex gap-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                    <div key={i} className="h-4 bg-gray-200 rounded w-20 skeleton-shimmer"></div>
+                  ))}
+                </div>
+              </div>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="p-4 border-b flex gap-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(j => (
+                    <div key={j} className="h-4 bg-gray-200 rounded w-20 skeleton-shimmer"></div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

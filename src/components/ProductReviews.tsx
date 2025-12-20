@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import EmptyState from '@/components/ui/EmptyState';
+import ReviewSummary from '@/components/ReviewSummary';
 
 interface Review {
   _id: string;
@@ -106,6 +107,14 @@ export default function ProductReviews({ productId }: { productId: string }) {
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm space-y-6">
+      {/* AI Review Summary - Shows when 5+ reviews exist */}
+      {reviewsData && reviewsData.totalReviews >= 5 && (
+        <ReviewSummary 
+          productId={productId} 
+          totalReviews={reviewsData.totalReviews} 
+        />
+      )}
+
       {/* Reviews Header */}
       <div className="flex items-center justify-between">
         <div>

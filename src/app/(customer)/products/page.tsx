@@ -65,14 +65,17 @@ const ProductsSkeleton = () => {
       {Array.from({ length: 10 }).map((_, i) => (
         <div
           key={i}
-          className="border rounded-xl shadow-sm p-3 bg-white flex flex-col animate-pulse"
+          className="border rounded-xl shadow-sm p-3 bg-white flex flex-col"
         >
-          <div className="bg-gray-200 h-48 w-full rounded-md"></div>
-          <div className="mt-3 h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="mt-2 h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="bg-gray-200 h-48 w-full rounded-md skeleton-shimmer"></div>
+          <div className="mt-3 h-4 bg-gray-200 rounded w-3/4 skeleton-shimmer"></div>
+          <div className="mt-2 h-4 bg-gray-200 rounded w-1/2 skeleton-shimmer"></div>
           <div className="mt-4 flex justify-between items-center">
-            <div className="h-4 bg-gray-200 rounded w-12"></div>
-            <div className="h-6 bg-gray-200 rounded w-16"></div>
+            <div className="space-y-1">
+              <div className="h-5 bg-gray-200 rounded w-16 skeleton-shimmer"></div>
+              <div className="h-3 bg-gray-200 rounded w-12 skeleton-shimmer"></div>
+            </div>
+            <div className="h-8 bg-gray-200 rounded w-16 skeleton-shimmer"></div>
           </div>
         </div>
       ))}

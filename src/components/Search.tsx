@@ -213,9 +213,21 @@ function SearchContent() {
 
         {/* Loading State */}
         {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
-            <p className="text-gray-600">Searching products...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm p-4">
+                <div className="aspect-square bg-gray-200 rounded-lg mb-4 skeleton-shimmer" />
+                <div className="space-y-2">
+                  <div className="h-5 bg-gray-200 rounded skeleton-shimmer" />
+                  <div className="h-4 bg-gray-200 rounded w-3/4 skeleton-shimmer" />
+                  <div className="flex items-center justify-between">
+                    <div className="h-5 bg-gray-200 rounded w-16 skeleton-shimmer" />
+                    <div className="h-3 bg-gray-200 rounded w-16 skeleton-shimmer" />
+                  </div>
+                  <div className="h-10 bg-gray-200 rounded skeleton-shimmer" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -259,6 +271,7 @@ function SearchContent() {
                           alt={product.name}
                           fill
                           className="object-cover rounded-lg"
+                          loading="lazy"
                           sizes={viewMode === 'list' ? '96px' : '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw'}
                         />
                       </div>

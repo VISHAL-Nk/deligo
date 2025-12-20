@@ -115,14 +115,58 @@ export default function ProductDetailClient({ productId }: { productId: string }
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-gray-200 h-96 rounded-lg"></div>
-              <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                <div className="h-12 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-32 bg-gray-200 rounded"></div>
+          {/* Back button skeleton */}
+          <div className="h-6 bg-gray-200 rounded w-20 mb-6 skeleton-shimmer" />
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Image gallery skeleton */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="h-96 bg-gray-200 rounded-lg mb-4 skeleton-shimmer" />
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-20 bg-gray-200 rounded skeleton-shimmer" />
+                  ))}
+                </div>
+              </div>
+              {/* Features skeleton */}
+              <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+                <div className="h-5 bg-gray-200 rounded w-1/3 skeleton-shimmer" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full skeleton-shimmer" />
+                    <div className="space-y-1 flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 skeleton-shimmer" />
+                      <div className="h-3 bg-gray-200 rounded w-1/2 skeleton-shimmer" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Product info skeleton */}
+            <div className="space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-3/4 skeleton-shimmer" />
+              <div className="h-4 bg-gray-200 rounded w-1/4 skeleton-shimmer" />
+              <div className="flex items-center gap-4">
+                <div className="h-10 bg-gray-200 rounded w-24 skeleton-shimmer" />
+                <div className="h-6 bg-gray-200 rounded w-16 skeleton-shimmer" />
+              </div>
+              <div className="space-y-2 pt-4">
+                <div className="h-4 bg-gray-200 rounded skeleton-shimmer" />
+                <div className="h-4 bg-gray-200 rounded skeleton-shimmer" />
+                <div className="h-4 bg-gray-200 rounded w-3/4 skeleton-shimmer" />
+              </div>
+              <div className="flex items-center gap-4 pt-4">
+                <div className="h-10 bg-gray-200 rounded w-32 skeleton-shimmer" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <div className="h-12 bg-gray-200 rounded flex-1 skeleton-shimmer" />
+                <div className="h-12 bg-gray-200 rounded flex-1 skeleton-shimmer" />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <div className="h-10 w-10 bg-gray-200 rounded skeleton-shimmer" />
+                <div className="h-10 w-10 bg-gray-200 rounded skeleton-shimmer" />
               </div>
             </div>
           </div>
@@ -173,6 +217,9 @@ export default function ProductDetailClient({ productId }: { productId: string }
                   fill
                   className="object-contain"
                   priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEEAQQDAAAAAAAAAAAAAQIDAAQFESExBhITQWGx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQACAwEAAAAAAAAAAAAAAAABAgADESH/2gAMAwEAAhEDEEA/ANHsOodVjrWO2t7iQRRqFQF2J0PAHT6qfc9U5e7uZZ5rm4eSVizs1w+yT+YpSlPZdYNwf//Z"
                 />
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -189,6 +236,8 @@ export default function ProductDetailClient({ productId }: { productId: string }
                       alt={`${product.name} ${index + 1}`}
                       fill
                       className="object-cover"
+                      loading="lazy"
+                      sizes="80px"
                     />
                   </button>
                 ))}
