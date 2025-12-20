@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from "react";
 import DeliveryTable from "@/components/admin/DeliveryTable";
 import { RefreshCw } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface DeliveryPartner {
   _id: string;
@@ -95,8 +96,13 @@ export default function DeliveryPage() {
           </div>
         </div>
       ) : deliveryPartners.length === 0 ? (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-white">
-          <p className="text-gray-600">No delivery partners found</p>
+        <div className="rounded-lg border border-gray-200 bg-white">
+          <EmptyState 
+            variant="delivery"
+            description={filter !== 'all' ? `No ${filter} delivery partner applications found.` : 'There are no delivery partner applications to review at the moment.'}
+            showRetry
+            onRetry={fetchDeliveryPartners}
+          />
         </div>
       ) : (
         <DeliveryTable

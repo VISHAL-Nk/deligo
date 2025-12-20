@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from "react";
 import SellerTable from "@/components/admin/SellerTable";
 import { RefreshCw } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Seller {
   _id: string;
@@ -89,8 +90,13 @@ export default function SellersPage() {
           </div>
         </div>
       ) : sellers.length === 0 ? (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-white">
-          <p className="text-gray-600">No sellers found</p>
+        <div className="rounded-lg border border-gray-200 bg-white">
+          <EmptyState 
+            variant="sellers"
+            description={filter !== 'all' ? `No ${filter} seller applications found.` : 'There are no seller applications to review at the moment.'}
+            showRetry
+            onRetry={fetchSellers}
+          />
         </div>
       ) : (
         <SellerTable sellers={sellers} onRefresh={fetchSellers} />

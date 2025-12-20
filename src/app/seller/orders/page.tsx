@@ -12,6 +12,7 @@ import {
   Download,
   Eye,
 } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Order {
   _id: string;
@@ -236,12 +237,14 @@ export default function OrdersPage() {
             ))}
           </div>
         ) : (orders || []).length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No orders found</h3>
-            <p className="text-gray-600">
-              {searchTerm ? 'Try adjusting your search' : 'Orders will appear here once customers place them'}
-            </p>
+          <div className="bg-white rounded-lg shadow-sm">
+            <EmptyState 
+              variant="orders"
+              title="No orders found"
+              description={searchTerm ? 'Try adjusting your search terms or filters' : 'Orders will appear here once customers place them'}
+              ctaText={searchTerm ? 'Clear Search' : undefined}
+              onCtaClick={searchTerm ? () => setSearchTerm('') : undefined}
+            />
           </div>
         ) : (
           <>

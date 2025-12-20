@@ -12,6 +12,7 @@ import {
   Check,
   AlertTriangle,
 } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Category {
   _id: string;
@@ -323,55 +324,54 @@ export default function CategoriesPage() {
             <p className="text-gray-600">Loading categories...</p>
           </div>
         ) : filteredCategories.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Tag className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No categories found</h3>
-            <p className="text-gray-600 mb-6">
-              {searchTerm 
-                ? 'Try adjusting your search' 
+          <div className="bg-white rounded-lg shadow-sm">
+            <EmptyState 
+              variant="categories"
+              title="No categories found"
+              description={searchTerm 
+                ? 'Try adjusting your search terms' 
                 : categories.length === 0 
                   ? 'Get started by adding default categories or creating your own' 
                   : 'No categories match the current filter'}
-            </p>
-            {!searchTerm && categories.length === 0 && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            >
+              {!searchTerm && categories.length === 0 && (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={handleSeedCategories}
+                    disabled={seeding}
+                    className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {seeding ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Seeding...
+                      </>
+                    ) : (
+                      <>
+                        <Tag className="w-5 h-5 mr-2" />
+                        Add 10 Default Categories
+                      </>
+                    )}
+                  </button>
+                  <span className="text-gray-500 self-center">or</span>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create Custom Category
+                  </button>
+                </div>
+              )}
+              {searchTerm && (
                 <button
-                  onClick={handleSeedCategories}
-                  disabled={seeding}
-                  className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setSearchTerm('')}
+                  className="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  {seeding ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Seeding...
-                    </>
-                  ) : (
-                    <>
-                      <Tag className="w-5 h-5 mr-2" />
-                      Add 10 Default Categories
-                    </>
-                  )}
+                  Clear Search
                 </button>
-                <span className="text-gray-500 self-center">or</span>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create Custom Category
-                </button>
-              </div>
-            )}
-            {searchTerm && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                }}
-                className="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Clear Search
-              </button>
-            )}
+              )}
+            </EmptyState>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">

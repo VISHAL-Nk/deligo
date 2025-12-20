@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { ArrowLeft, CreditCard, Wallet, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, ShoppingBag, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { handleError, ERROR_MESSAGES } from '@/lib/api-utils';
 
 interface RazorpayResponse {
   razorpay_order_id: string;
@@ -52,6 +53,7 @@ function CheckoutContent() {
   
   const [items, setItems] = useState<CheckoutItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
   const [processingPayment, setProcessingPayment] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
@@ -76,75 +78,93 @@ function CheckoutContent() {
     };
   }, []);
 
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin?callbackUrl=/checkout');
-      return;
-    }
-
-    if (status === 'authenticated') {
+  const fetchCheckoutData = async () => {
+    try {
+      setError(null);
       const productId = searchParams.get('productId');
       const quantity = parseInt(searchParams.get('quantity') || '1');
 
       if (productId) {
         // Direct purchase mode
         setPurchaseMode('direct');
-        // Fetch actual product data from API
-        fetch(`/api/products/${productId}`)
-          .then(res => res.json())
-          .then(product => {
-            const checkoutItem: CheckoutItem = {
-              id: product._id,
-              name: product.name,
-              image: product.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
-              price: product.price - product.discount,
-              quantity: quantity
-            };
-            setItems([checkoutItem]);
-            setLoading(false);
-          })
-          .catch(error => {
-            console.error('Error fetching product:', error);
-            toast.error('Product not found');
-            router.push('/');
-          });
+        const response = await fetch(`/api/products/${productId}`);
+        
+        if (!response.ok) {
+          throw new Error('Product not found or unavailable');
+        }
+        
+        const product = await response.json();
+        const checkoutItem: CheckoutItem = {
+          id: product._id,
+          name: product.name,
+          image: product.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
+          price: product.price - product.discount,
+          quantity: quantity
+        };
+        setItems([checkoutItem]);
       } else {
         // Cart purchase mode
         setPurchaseMode('cart');
-        // If no productId, try to fetch from cart
-        fetch('/api/cart')
-          .then(res => res.json())
-          .then(cartData => {
-            if (cartData.items && cartData.items.length > 0) {
-              const checkoutItems: CheckoutItem[] = cartData.items.map((item: { productId: { _id: string; name: string; images: string[]; price: number; discount: number }; quantity: number }) => ({
-                id: item.productId._id,
-                name: item.productId.name,
-                image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
-                price: item.productId.price - item.productId.discount,
-                quantity: item.quantity
-              }));
-              setItems(checkoutItems);
-            } else {
-              toast.error('Your cart is empty');
-              router.push('/');
-            }
-            setLoading(false);
-          })
-          .catch(error => {
-            console.error('Error fetching cart:', error);
-            setLoading(false);
-          });
+        const response = await fetch('/api/cart');
+        
+        if (!response.ok) {
+          throw new Error(ERROR_MESSAGES.FETCH_FAILED);
+        }
+        
+        const cartData = await response.json();
+        
+        if (cartData.items && cartData.items.length > 0) {
+          const checkoutItems: CheckoutItem[] = cartData.items.map((item: { productId: { _id: string; name: string; images: string[]; price: number; discount: number }; quantity: number }) => ({
+            id: item.productId._id,
+            name: item.productId.name,
+            image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
+            price: item.productId.price - item.productId.discount,
+            quantity: item.quantity
+          }));
+          setItems(checkoutItems);
+        } else {
+          toast.error('Your cart is empty');
+          router.push('/');
+          return;
+        }
       }
+    } catch (err) {
+      const errorMessage = handleError(err, false);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin?callbackUrl=/checkout');
+      return;
+    }
+
+    if (status === 'authenticated') {
+      fetchCheckoutData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, router, searchParams]);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = subtotal >= 500 ? 0 : 50;
   const tax = Math.round(subtotal * 0.05); // 5% tax
   const total = subtotal + deliveryFee + tax;
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    fetchCheckoutData();
+  };
   
   const handlePayment = async () => {
+    if (items.length === 0) {
+      toast.error('No items to checkout');
+      return;
+    }
+
     setProcessingPayment(true);
 
     try {
@@ -191,7 +211,8 @@ function CheckoutContent() {
           }, 4000);
         } else {
           setProcessingPayment(false);
-          toast.error(data.error || 'Order failed. Please try again.');
+          const errorMessage = data.error || data.message || ERROR_MESSAGES.ORDER_FAILED;
+          toast.error(errorMessage);
         }
       } else {
         // Process Razorpay Payment
@@ -209,7 +230,8 @@ function CheckoutContent() {
         const data = await response.json();
 
         if (!response.ok) {
-          toast.error(data.error || 'Failed to initiate payment');
+          const errorMessage = data.error || data.message || ERROR_MESSAGES.PAYMENT_FAILED;
+          toast.error(errorMessage);
           setProcessingPayment(false);
           return;
         }
@@ -275,11 +297,11 @@ function CheckoutContent() {
                   router.push('/');
                 }, 4000);
               } else {
-                toast.error(verifyData.error || 'Payment verification failed');
+                const errorMessage = verifyData.error || verifyData.message || 'Payment verification failed. Please contact support.';
+                toast.error(errorMessage);
               }
-            } catch (error) {
-              console.error('Payment verification error:', error);
-              toast.error('Payment verification failed');
+            } catch (err) {
+              handleError(err, true);
             } finally {
               setProcessingPayment(false);
             }
@@ -303,9 +325,8 @@ function CheckoutContent() {
         const razorpay = new window.Razorpay(options);
         razorpay.open();
       }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error('Payment failed. Please try again.');
+    } catch (err) {
+      handleError(err, true);
       setProcessingPayment(false);
     }
   };
@@ -322,6 +343,36 @@ function CheckoutContent() {
                 <div className="bg-gray-200 h-32 rounded-lg"></div>
               </div>
               <div className="bg-gray-200 h-64 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with retry option
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <AlertCircle size={64} className="mx-auto text-red-400 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Unable to Load Checkout</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={handleRetry}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors inline-flex items-center gap-2"
+              >
+                <RefreshCw size={20} />
+                Try Again
+              </button>
+              <button
+                onClick={() => router.push('/cart')}
+                className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Back to Cart
+              </button>
             </div>
           </div>
         </div>

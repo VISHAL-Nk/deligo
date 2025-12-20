@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from "react";
 import UserTable from "@/components/admin/UserTable";
 import { RefreshCw } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface User {
   _id: string;
@@ -83,8 +84,13 @@ export default function UsersPage() {
           </div>
         </div>
       ) : users.length === 0 ? (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-white">
-          <p className="text-sm text-gray-600 sm:text-base">No users found</p>
+        <div className="rounded-lg border border-gray-200 bg-white">
+          <EmptyState 
+            variant="users"
+            description={filter !== 'all' ? `No ${filter}s found. Try changing the filter.` : 'There are no users matching your criteria.'}
+            showRetry
+            onRetry={fetchUsers}
+          />
         </div>
       ) : (
         <UserTable users={users} onRefresh={fetchUsers} />

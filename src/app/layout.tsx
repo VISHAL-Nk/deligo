@@ -35,24 +35,51 @@ export default function RootLayout({
           <Providers>
             <Toaster 
               position="top-right"
+              containerClassName="toast-container"
+              containerStyle={{
+                top: 20,
+                right: 20,
+              }}
+              gutter={8}
               toastOptions={{
+                // Default options for all toasts
                 duration: 3000,
                 style: {
                   background: '#333',
                   color: '#fff',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  maxWidth: '380px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 },
+                // Type-specific configurations
                 success: {
                   duration: 3000,
+                  style: {
+                    background: '#10b981',
+                    color: '#fff',
+                  },
                   iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
+                    primary: '#fff',
+                    secondary: '#10b981',
                   },
                 },
                 error: {
-                  duration: 4000,
+                  duration: 5000,
+                  style: {
+                    background: '#ef4444',
+                    color: '#fff',
+                  },
                   iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
+                    primary: '#fff',
+                    secondary: '#ef4444',
+                  },
+                },
+                loading: {
+                  style: {
+                    background: '#6b7280',
+                    color: '#fff',
                   },
                 },
               }}

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Upload,
 } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Product {
   _id: string;
@@ -168,21 +169,15 @@ export default function ProductsPage() {
             ))}
           </div>
         ) : (products || []).length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-600 mb-6">
-              {searchTerm ? 'Try adjusting your search' : 'Get started by adding your first product'}
-            </p>
-            {!searchTerm && (
-              <Link
-                href="/seller/products/new"
-                className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Add Your First Product
-              </Link>
-            )}
+          <div className="bg-white rounded-lg shadow-sm">
+            <EmptyState 
+              variant="products"
+              title="No products found"
+              description={searchTerm ? 'Try adjusting your search terms or filters' : 'Get started by adding your first product to start selling'}
+              ctaText={searchTerm ? 'Clear Search' : 'Add Your First Product'}
+              ctaHref={searchTerm ? undefined : '/seller/products/new'}
+              onCtaClick={searchTerm ? () => setSearchTerm('') : undefined}
+            />
           </div>
         ) : (
           <>

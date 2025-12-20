@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { Search, Filter, SortAsc, SortDesc, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Product {
   _id: string;
@@ -229,14 +230,11 @@ function SearchContent() {
         {results && !loading && (
           <>
             {results.products.length === 0 ? (
-              <div className="text-center py-12">
-                <Search size={64} className="mx-auto text-gray-400 mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  No products found
-                </h2>
-                <p className="text-gray-600">
-                  Try adjusting your search terms or filters
-                </p>
+              <div className="bg-white rounded-lg shadow-sm">
+                <EmptyState 
+                  variant="search"
+                  description={`We couldn't find any products matching "${query}". Try different keywords or browse all products.`}
+                />
               </div>
             ) : (
               <>

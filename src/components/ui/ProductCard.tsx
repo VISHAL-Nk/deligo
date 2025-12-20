@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { handleError, ERROR_MESSAGES } from "@/lib/api-utils";
 
 // Your Product interface here...
 interface Product {
@@ -35,8 +36,8 @@ const ProductCard = ({ product }: { product: Product }) => {
   const [loading, setLoading] = useState(false);
 
   const updateCartAPI = async (productId: string, newQty: number) => {
+    setLoading(true);
     try {
-      setLoading(true);
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
@@ -49,13 +50,13 @@ const ProductCard = ({ product }: { product: Product }) => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update cart');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || ERROR_MESSAGES.CART_UPDATE_FAILED;
+        throw new Error(errorMessage);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Cart update error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -70,15 +71,22 @@ const ProductCard = ({ product }: { product: Product }) => {
     }
 
     const newQty = Math.max(0, qty + change);
+    const previousQty = qty;
+    
+    // Optimistic update
+    setQty(newQty);
     
     try {
       await updateCartAPI(productId, newQty);
-      setQty(newQty);
       // Trigger cart count refresh
       window.dispatchEvent(new Event('cartUpdated'));
+      if (newQty === 0) {
+        toast.success('Item removed from cart');
+      }
     } catch (error) {
-      console.error('Failed to update cart:', error);
-      toast.error('Failed to update cart. Please try again.');
+      // Revert on error
+      setQty(previousQty);
+      handleError(error, true);
     }
   };
 
@@ -89,15 +97,20 @@ const ProductCard = ({ product }: { product: Product }) => {
       return;
     }
 
+    // Check stock availability
+    if (product.stock <= 0) {
+      toast.error('Sorry, this item is out of stock');
+      return;
+    }
+
     try {
       await updateCartAPI(product._id, 1);
       setQty(1);
       // Trigger cart count refresh
       window.dispatchEvent(new Event('cartUpdated'));
-      toast.success('Added to cart!');
+      toast.success(`${product.name} added to cart!`);
     } catch (error) {
-      console.error('Failed to add to cart:', error);
-      toast.error('Failed to add to cart. Please try again.');
+      handleError(error, true);
     }
   };
 

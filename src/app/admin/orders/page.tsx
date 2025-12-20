@@ -14,6 +14,7 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { EmptyStateTableRow } from '@/components/ui/EmptyState';
 
 interface Order {
   _id: string;
@@ -287,11 +288,11 @@ const AdminOrdersPage = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      No orders found
-                    </td>
-                  </tr>
+                  <EmptyStateTableRow 
+                    colSpan={8} 
+                    icon={ShoppingBag}
+                    message="No orders found matching your filters"
+                  />
                 ) : (
                   filteredOrders.map((order) => (
                     <tr key={order._id} className="hover:bg-gray-50">

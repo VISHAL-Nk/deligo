@@ -1,5 +1,6 @@
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/Footer";
+import DashboardRedirectBanner from "@/components/DashboardRedirectBanner";
 
 export default function CustomerLayout({
   children,
@@ -8,6 +9,7 @@ export default function CustomerLayout({
 }>) {
   return (
     <>
+      <DashboardRedirectBanner />
       <Navbar />
       {children}
       <Footer />

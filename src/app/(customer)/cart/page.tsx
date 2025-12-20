@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, RefreshCw, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { handleError, ERROR_MESSAGES } from '@/lib/api-utils';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface CartItem {
   id: string;
@@ -23,70 +25,88 @@ const CartPage = () => {
   
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+
+  const fetchCart = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await fetch('/api/cart');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || ERROR_MESSAGES.FETCH_FAILED);
+      }
+      
+      const data = await response.json();
+      
+      if (data.items && Array.isArray(data.items)) {
+        const formattedItems: CartItem[] = data.items
+          .filter((item: {
+            productId: {
+              _id: string;
+              name: string;
+              images: string[];
+              price: number;
+              discount: number;
+              stock: number;
+            } | null;
+            quantity: number;
+          }) => item.productId !== null)
+          .map((item: {
+            productId: {
+              _id: string;
+              name: string;
+              images: string[];
+              price: number;
+              discount: number;
+              stock: number;
+            };
+            quantity: number;
+          }) => ({
+            id: item.productId._id,
+            name: item.productId.name,
+            image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
+            price: item.productId.price,
+            discount: item.productId.discount,
+            quantity: item.quantity,
+            stock: item.productId.stock
+          }));
+        setCartItems(formattedItems);
+      } else {
+        setCartItems([]);
+      }
+    } catch (err) {
+      const errorMessage = handleError(err, false);
+      setError(errorMessage);
+      setCartItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
     if (status === 'unauthenticated') {
       router.push('/auth/signin?callbackUrl=/cart');
       return;
     }
 
     if (status === 'authenticated') {
-      // Fetch actual cart data from API
-      fetch('/api/cart')
-        .then(res => res.json())
-        .then(data => {
-          if (data.items && Array.isArray(data.items)) {
-            const formattedItems: CartItem[] = data.items
-              .filter((item: {
-                productId: {
-                  _id: string;
-                  name: string;
-                  images: string[];
-                  price: number;
-                  discount: number;
-                  stock: number;
-                } | null;
-                quantity: number;
-              }) => item.productId !== null) // Filter out items with null productId
-              .map((item: {
-                productId: {
-                  _id: string;
-                  name: string;
-                  images: string[];
-                  price: number;
-                  discount: number;
-                  stock: number;
-                };
-                quantity: number;
-              }) => ({
-                id: item.productId._id,
-                name: item.productId.name,
-                image: item.productId.images[0] || 'https://res.cloudinary.com/dom4xev0l/image/upload/v1762839187/84ba0018-a2f3-4916-8f67-8797e5d58479.png',
-                price: item.productId.price,
-                discount: item.productId.discount,
-                quantity: item.quantity,
-                stock: item.productId.stock
-              }));
-            setCartItems(formattedItems);
-          } else {
-            setCartItems([]);
-          }
-          setLoading(false);
-        })
-        .catch(error => {
-          console.error('Error fetching cart:', error);
-          setCartItems([]);
-          setLoading(false);
-        });
+      fetchCart();
     }
-  }, [status, router]);
+  }, [status, router, fetchCart]);
 
   const updateQuantity = async (id: string, change: number) => {
     const item = cartItems.find(item => item.id === id);
     if (!item) return;
 
     const newQuantity = Math.max(1, Math.min(item.stock, item.quantity + change));
+    if (newQuantity === item.quantity) return;
+
+    const previousQuantity = item.quantity;
+    
+    // Mark item as updating
+    setUpdatingItems(prev => new Set(prev).add(id));
     
     // Optimistically update UI
     setCartItems(prevItems =>
@@ -98,7 +118,6 @@ const CartPage = () => {
       })
     );
 
-    // Update quantity in backend
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -112,32 +131,43 @@ const CartPage = () => {
       });
 
       if (!response.ok) {
-        // Revert on error
-        setCartItems(prevItems =>
-          prevItems.map(item => {
-            if (item.id === id) {
-              return { ...item, quantity: item.quantity };
-            }
-            return item;
-          })
-        );
-        toast.error('Failed to update cart. Please try again.');
-      } else {
-        // Trigger cart count refresh
-        window.dispatchEvent(new Event('cartUpdated'));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || ERROR_MESSAGES.CART_UPDATE_FAILED);
       }
-    } catch (error) {
-      console.error('Error updating cart:', error);
-      toast.error('Failed to update cart. Please try again.');
+      
+      // Trigger cart count refresh
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+    } catch (err) {
+      // Revert on error
+      setCartItems(prevItems =>
+        prevItems.map(item => {
+          if (item.id === id) {
+            return { ...item, quantity: previousQuantity };
+          }
+          return item;
+        })
+      );
+      handleError(err, true);
+    } finally {
+      setUpdatingItems(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
   const removeItem = async (id: string) => {
-    // Optimistically update UI
     const removedItem = cartItems.find(item => item.id === id);
+    if (!removedItem) return;
+
+    // Mark item as updating
+    setUpdatingItems(prev => new Set(prev).add(id));
+    
+    // Optimistically update UI
     setCartItems(prevItems => prevItems.filter(item => item.id !== id));
 
-    // Remove item from backend by setting quantity to 0
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -151,22 +181,24 @@ const CartPage = () => {
       });
 
       if (!response.ok) {
-        // Revert on error
-        if (removedItem) {
-          setCartItems(prevItems => [...prevItems, removedItem]);
-        }
-        toast.error('Failed to remove item. Please try again.');
-      } else {
-        // Trigger cart count refresh
-        window.dispatchEvent(new Event('cartUpdated'));
-        toast.success('Item removed from cart');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || ERROR_MESSAGES.CART_REMOVE_FAILED);
       }
-    } catch (error) {
-      console.error('Error removing item:', error);
-      if (removedItem) {
-        setCartItems(prevItems => [...prevItems, removedItem]);
-      }
-      toast.error('Failed to remove item. Please try again.');
+      
+      // Trigger cart count refresh
+      window.dispatchEvent(new Event('cartUpdated'));
+      toast.success(`${removedItem.name} removed from cart`);
+      
+    } catch (err) {
+      // Revert on error
+      setCartItems(prevItems => [...prevItems, removedItem]);
+      handleError(err, true);
+    } finally {
+      setUpdatingItems(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -177,10 +209,16 @@ const CartPage = () => {
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      toast.error('Your cart is empty!');
+      toast.error('Your cart is empty! Add some items first.');
       return;
     }
     router.push('/checkout');
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    fetchCart();
   };
 
   if (loading || status === 'loading') {
@@ -195,6 +233,36 @@ const CartPage = () => {
                 <div className="bg-gray-200 h-32 rounded-lg"></div>
               </div>
               <div className="bg-gray-200 h-64 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with retry option
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <AlertCircle size={64} className="mx-auto text-red-400 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Unable to Load Cart</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={handleRetry}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors inline-flex items-center gap-2"
+              >
+                <RefreshCw size={20} />
+                Try Again
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Continue Shopping
+              </button>
             </div>
           </div>
         </div>
@@ -218,16 +286,11 @@ const CartPage = () => {
         <p className="text-gray-600 mb-8">{cartItems.length} items in your cart</p>
 
         {cartItems.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-6">Add some items to get started!</p>
-            <button
-              onClick={() => router.push('/')}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-            >
-              Start Shopping
-            </button>
+          <div className="bg-white rounded-lg shadow-sm">
+            <EmptyState 
+              variant="cart"
+              iconSize="xl"
+            />
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-8">
@@ -235,8 +298,9 @@ const CartPage = () => {
             <div className="md:col-span-2 space-y-4">
               {cartItems.map((item) => {
                 const itemTotal = (item.price - item.discount) * item.quantity;
+                const isUpdating = updatingItems.has(item.id);
                 return (
-                  <div key={item.id} className="bg-white rounded-lg shadow-sm p-4">
+                  <div key={item.id} className={`bg-white rounded-lg shadow-sm p-4 transition-opacity ${isUpdating ? 'opacity-70' : ''}`}>
                     <div className="flex gap-4">
                       <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
                         <Image
@@ -245,6 +309,11 @@ const CartPage = () => {
                           fill
                           className="object-cover"
                         />
+                        {isUpdating && (
+                          <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                            <RefreshCw className="w-5 h-5 animate-spin text-green-600" />
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex-1">
@@ -260,7 +329,8 @@ const CartPage = () => {
                           </div>
                           <button
                             onClick={() => removeItem(item.id)}
-                            className="text-red-500 hover:text-red-700 transition-colors"
+                            disabled={isUpdating}
+                            className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                             aria-label="Remove item"
                           >
                             <Trash2 size={20} />
@@ -271,7 +341,7 @@ const CartPage = () => {
                           <div className="flex items-center border-2 border-gray-300 rounded-lg">
                             <button
                               onClick={() => updateQuantity(item.id, -1)}
-                              disabled={item.quantity <= 1}
+                              disabled={item.quantity <= 1 || isUpdating}
                               className="px-3 py-1 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Minus size={16} />
@@ -279,7 +349,7 @@ const CartPage = () => {
                             <span className="px-4 py-1 font-semibold min-w-[40px] text-center">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.id, 1)}
-                              disabled={item.quantity >= item.stock}
+                              disabled={item.quantity >= item.stock || isUpdating}
                               className="px-3 py-1 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Plus size={16} />

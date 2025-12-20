@@ -5,6 +5,7 @@ import { Star, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Review {
   _id: string;
@@ -223,9 +224,18 @@ export default function ProductReviews({ productId }: { productId: string }) {
             </div>
           ))
         ) : (
-          <div className="text-center py-10 text-gray-600">
-            <p>No reviews yet. Be the first to review this product!</p>
-          </div>
+          <EmptyState 
+            variant="reviews"
+            iconSize="md"
+            ctaText={session ? 'Write a Review' : 'Sign in to Review'}
+            onCtaClick={() => {
+              if (session) {
+                setShowReviewForm(true);
+              } else {
+                router.push('/auth/signin?callbackUrl=/products/' + productId);
+              }
+            }}
+          />
         )}
       </div>
     </div>
