@@ -12,6 +12,7 @@
   "dependencies": {
     "@auth/mongodb-adapter": "^3.10.0",
     "@gsap/react": "^2.1.2",
+    "@huggingface/inference": "^4.13.5",
     "@types/multer": "^2.0.0",
     "@types/papaparse": "^5.5.0",
     "@upstash/ratelimit": "^2.0.6",

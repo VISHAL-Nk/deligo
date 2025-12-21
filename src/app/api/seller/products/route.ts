@@ -138,6 +138,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Handle AI-generated images (base64 strings)
+    const aiGeneratedImagesData = formData.get('aiGeneratedImages') as string;
+    if (aiGeneratedImagesData) {
+      try {
+        const aiGeneratedImages: string[] = JSON.parse(aiGeneratedImagesData);
+        for (let i = 0; i < aiGeneratedImages.length; i++) {
+          const base64Data = aiGeneratedImages[i];
+          // Extract base64 content from data URL (data:image/png;base64,xxxxx)
+          const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (matches && matches.length === 3) {
+            const buffer = Buffer.from(matches[2], 'base64');
+            const imageUrl = await uploadProductImage(
+              buffer,
+              sellerProfile._id.toString(),
+              product._id.toString(),
+              `ai-generated-${Date.now()}-${i}.png`
+            );
+            images.push(imageUrl);
+          }
+        }
+      } catch (parseError) {
+        console.error('Error processing AI-generated images:', parseError);
+      }
+    }
+
     // Update product with images
     product.images = images;
     await product.save();

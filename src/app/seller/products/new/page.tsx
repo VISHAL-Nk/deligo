@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Upload, X, Save, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import AIImageGenerator from '@/components/seller/AIImageGenerator';
 
 interface Category {
   _id: string;
@@ -62,7 +63,7 @@ export default function NewProductPage() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + imageFiles.length > 5) {
+    if (files.length + imageFiles.length + imagePreviews.length > 5) {
       alert('Maximum 5 images allowed');
       return;
     }
@@ -80,8 +81,29 @@ export default function NewProductPage() {
   };
 
   const removeImage = (index: number) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    // Check if this index corresponds to an AI-generated image (base64) or a file
+    const totalAIImages = imagePreviews.filter(p => p.startsWith('data:')).length;
+    if (index < totalAIImages) {
+      // Removing an AI-generated image
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // Removing a file-based image
+      const fileIndex = index - totalAIImages;
+      setImageFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  // Handle AI-generated images
+  const handleAIGeneratedImages = (images: string[]) => {
+    const remainingSlots = 5 - imagePreviews.length;
+    const imagesToAdd = images.slice(0, remainingSlots);
+    
+    if (imagesToAdd.length < images.length) {
+      alert(`Only ${remainingSlots} image slot(s) available. Added ${imagesToAdd.length} of ${images.length} selected images.`);
+    }
+    
+    setImagePreviews((prev) => [...prev, ...imagesToAdd]);
   };
 
   // const addVariant = () => {
@@ -108,10 +130,16 @@ export default function NewProductPage() {
     try {
       const formDataToSend = new FormData();
 
-      // Append images
+      // Append file-based images
       imageFiles.forEach((file) => {
         formDataToSend.append('images', file);
       });
+
+      // Append AI-generated images (base64 strings)
+      const aiGeneratedImages = imagePreviews.filter(p => p.startsWith('data:'));
+      if (aiGeneratedImages.length > 0) {
+        formDataToSend.append('aiGeneratedImages', JSON.stringify(aiGeneratedImages));
+      }
 
       // Append product data
       formDataToSend.append('name', formData.name);
@@ -330,6 +358,12 @@ export default function NewProductPage() {
                     >
                       <X className="w-4 h-4" />
                     </button>
+                    {/* AI Generated Badge */}
+                    {preview.startsWith('data:') && (
+                      <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full">
+                        AI
+                      </div>
+                    )}
                   </div>
                 ))}
                 
@@ -350,6 +384,14 @@ export default function NewProductPage() {
                 )}
               </div>
               <p className="text-sm text-gray-500">Upload up to 5 images. First image will be the main image.</p>
+
+              {/* AI Image Generator */}
+              <AIImageGenerator
+                productName={formData.name}
+                productDescription={formData.description}
+                onImagesSelected={handleAIGeneratedImages}
+                maxImages={5 - imagePreviews.length}
+              />
             </div>
           </div>
 
