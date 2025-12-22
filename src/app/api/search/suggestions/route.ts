@@ -3,6 +3,7 @@
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
 import { type NextRequest } from "next/server";
+import { getAutocomplete, isSearchServerConfigured } from "@/lib/search";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,6 +22,46 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Try advanced search server first
+    if (isSearchServerConfigured()) {
+      try {
+        const autocomplete = await getAutocomplete(query, 10);
+        
+        return new Response(JSON.stringify({
+          suggestions: autocomplete.products.map((p, index) => ({
+            id: `product_${index}`,
+            text: p.name,
+            type: 'product' as const,
+            count: 1,
+            image: p.image,
+            category: p.category_name,
+            price: p.price
+          })),
+          categories: autocomplete.categories.map((c, index) => ({
+            id: `category_${index}`,
+            text: c.name,
+            type: 'category' as const,
+            count: c.product_count
+          })),
+          trending: autocomplete.suggestions.map((s, index) => ({
+            id: `suggestion_${index}`,
+            text: s,
+            type: 'trending' as const,
+            count: 0
+          })),
+          recent: [],
+          source: 'meilisearch'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (searchError) {
+        console.error('Advanced autocomplete failed, falling back to MongoDB:', searchError);
+        // Fall through to MongoDB
+      }
+    }
+
+    // Fallback: MongoDB aggregation
     await dbConnect();
 
     // Get product suggestions based on name and description

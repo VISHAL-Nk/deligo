@@ -1,0 +1,50 @@
+# Docker Compose for Search Server + Meilisearch
+version: '3.8'
+
+services:
+  # Meilisearch - The search engine
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: deligo-meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_ENV=development
+      - MEILI_MASTER_KEY=${MEILISEARCH_MASTER_KEY:-deligo_search_master_key_2024}
+      - MEILI_NO_ANALYTICS=true
+    volumes:
+      - meilisearch_data:/meili_data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Python Search Server
+  search-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deligo-search-server
+    ports:
+      - "8001:8001"
+    environment:
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - MEILISEARCH_MASTER_KEY=${MEILISEARCH_MASTER_KEY:-deligo_search_master_key_2024}
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB_NAME=${MONGODB_DB_NAME:-deligo}
+      - SEARCH_SERVER_PORT=8001
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  meilisearch_data:
+    driver: local
+
+networks:
+  default:
+    name: deligo-network
