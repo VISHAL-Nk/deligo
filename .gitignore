@@ -87,3 +87,5 @@ htmlcov/
 
 # Logs
 *.log
+
+meilisearch
