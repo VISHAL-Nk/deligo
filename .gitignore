@@ -89,3 +89,6 @@ htmlcov/
 *.log
 
 meilisearch
+
+search-server/start-search.sh
+search-server/stop-search.sh

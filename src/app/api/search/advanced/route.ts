@@ -3,6 +3,15 @@
  * 
  * This route proxies search requests to the Python Search Server
  * when available, falling back to MongoDB regex search otherwise.
+ * 
+ * Supports filters:
+ * - category / categoryId: Filter by category
+ * - minPrice / maxPrice: Price range filter
+ * - minRating: Minimum rating filter
+ * - inStock: Only show in-stock products
+ * - hasDiscount: Only show discounted products
+ * - sortBy: Sort field (relevance, price, createdAt, rating, popularity)
+ * - sortOrder: Sort direction (asc, desc)
  */
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -49,7 +58,9 @@ export async function GET(req: NextRequest) {
     const sortOrder = searchParams.get("sortOrder") || "desc";
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
+    const minRating = searchParams.get("minRating");
     const inStock = searchParams.get("inStock");
+    const hasDiscount = searchParams.get("hasDiscount");
 
     if (!query) {
       return NextResponse.json({
@@ -80,14 +91,24 @@ export async function GET(req: NextRequest) {
           'orderCount': 'order_count',
           'viewCount': 'view_count',
           'rating': 'rating',
+          'popularity': 'order_count',
+          'relevance': 'relevance',
         };
         options.sortBy = sortByMap[sortBy] || 'relevance';
 
         if (category) options.categoryName = category;
-        if (categoryId) options.categoryId = categoryId;
+        if (categoryId) {
+          // Handle multiple category IDs
+          const categoryIds = categoryId.split(',').filter(Boolean);
+          if (categoryIds.length > 0) {
+            options.categoryId = categoryIds[0]; // Use first category for advanced search
+          }
+        }
         if (minPrice) options.minPrice = parseFloat(minPrice);
         if (maxPrice) options.maxPrice = parseFloat(maxPrice);
+        if (minRating) options.minRating = parseFloat(minRating);
         if (inStock === 'true') options.inStock = true;
+        if (hasDiscount === 'true') options.hasDiscount = true;
 
         // Search using advanced search server
         const response = await searchProducts(query, options);
@@ -115,10 +136,12 @@ export async function GET(req: NextRequest) {
     interface SearchCriteria {
       $or: Array<{ [key: string]: { $regex: string; $options: string } }>;
       category?: { $regex: string; $options: string };
-      categoryId?: string;
+      categoryId?: { $in: string[] } | string;
       status?: string;
       price?: { $gte?: number; $lte?: number };
       stock?: { $gt: number };
+      discount?: { $gt: number };
+      rating?: { $gte: number };
     }
 
     const searchCriteria: SearchCriteria = {
@@ -134,7 +157,12 @@ export async function GET(req: NextRequest) {
     }
 
     if (categoryId) {
-      searchCriteria.categoryId = categoryId;
+      const categoryIds = categoryId.split(',').filter(Boolean);
+      if (categoryIds.length > 1) {
+        searchCriteria.categoryId = { $in: categoryIds };
+      } else if (categoryIds.length === 1) {
+        searchCriteria.categoryId = categoryIds[0];
+      }
     }
 
     if (minPrice || maxPrice) {
@@ -147,20 +175,45 @@ export async function GET(req: NextRequest) {
       searchCriteria.stock = { $gt: 0 };
     }
 
+    if (hasDiscount === 'true') {
+      searchCriteria.discount = { $gt: 0 };
+    }
+
+    if (minRating) {
+      searchCriteria.rating = { $gte: parseFloat(minRating) };
+    }
+
     const totalProducts = await Product.countDocuments(searchCriteria);
 
+    // Build sort object with special handling
     const sortObject: Record<string, 1 | -1> = {};
-    sortObject[sortBy] = sortOrder === "asc" ? 1 : -1;
+    if (sortBy === 'popularity') {
+      sortObject['orderCount'] = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === 'relevance') {
+      // For relevance, sort by a combination of factors
+      sortObject['orderCount'] = -1;
+      sortObject['viewCount'] = -1;
+    } else {
+      sortObject[sortBy] = sortOrder === "asc" ? 1 : -1;
+    }
 
     const products = await Product.find(searchCriteria)
+      .populate('categoryId', 'name slug')
       .sort(sortObject)
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    // Transform products to include category name
+    const transformedProducts = products.map((product) => ({
+      ...product,
+      categoryName: (product.categoryId as { name?: string })?.name || 'Uncategorized',
+    }));
 
     const totalPages = Math.ceil(totalProducts / limit);
 
     return NextResponse.json({
-      products,
+      products: transformedProducts,
       totalProducts,
       currentPage: page,
       totalPages,
