@@ -70,6 +70,7 @@ const ProductSchema = new mongoose.Schema(
     variants: { type: [VariantSchema], default: [] }, // Product variants
     seo: { type: SEOSchema, default: {} }, // SEO fields
     viewCount: { type: Number, default: 0 }, // Track product views
+    lastViewedAt: { type: Date }, // Last time product was viewed
     orderCount: { type: Number, default: 0 }, // Track order count
     returnCount: { type: Number, default: 0 }, // Track return count
     status: {

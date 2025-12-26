@@ -3,9 +3,13 @@
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw, ArrowLeft, Check } from 'lucide-react';
+import { ShoppingCart, Share2, Star, Truck, Shield, RotateCcw, ArrowLeft, Check } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ProductReviews from '@/components/ProductReviews';
+import ProductRecommendations from '@/components/ProductRecommendations';
+import RecentlyViewed from '@/components/RecentlyViewed';
+import WishlistButton from '@/components/WishlistButton';
+import { addToRecentlyViewed } from '@/lib/recently-viewed';
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -29,12 +33,18 @@ interface Product {
 
 export default function ProductDetailClient({ productId }: { productId: string }) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [viewTracked, setViewTracked] = useState(false);
 
+  // Get user ID safely
+  const sessionUser = session?.user as { id?: string } | undefined;
+  const userId = sessionUser?.id;
+
+  // Fetch product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -55,6 +65,47 @@ export default function ProductDetailClient({ productId }: { productId: string }
 
     fetchProduct();
   }, [productId]);
+
+  // Track view separately - wait for session to load
+  useEffect(() => {
+    if (viewTracked) return;
+    if (status === "loading") return; // Wait for session to load
+    
+    // Track view (with or without user ID)
+    trackProductView(productId, userId);
+    setViewTracked(true);
+  }, [productId, userId, status, viewTracked]);
+
+  // Add to recently viewed when product loads
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed({
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        discount: product.discount,
+        images: product.images,
+      });
+    }
+  }, [product]);
+
+  // Track product view (non-blocking)
+  const trackProductView = async (prodId: string, uid?: string) => {
+    try {
+      console.log(`[View Tracking] Product: ${prodId}, User: ${uid || 'anonymous'}`);
+      await fetch('/api/analytics/view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          productId: prodId, 
+          userId: uid || null,
+          timestamp: new Date().toISOString()
+        }),
+      });
+    } catch (err) {
+      console.error('[View Tracking] Error:', err);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!session) {
@@ -359,10 +410,13 @@ export default function ProductDetailClient({ productId }: { productId: string }
 
               {/* Wishlist & Share */}
               <div className="flex gap-4">
-                <button className="flex-1 border-2 border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                  <Heart size={20} />
-                  Wishlist
-                </button>
+                <WishlistButton
+                  product={product}
+                  variant="button"
+                  showLabel
+                  size="lg"
+                  className="flex-1 border-2 border-gray-300"
+                />
                 <button 
                   onClick={handleShare}
                   className="flex-1 border-2 border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
@@ -400,6 +454,37 @@ export default function ProductDetailClient({ productId }: { productId: string }
         <div className="mt-12">
           <ProductReviews productId={productId} />
         </div>
+
+        {/* Similar Products - AI Recommendations */}
+        <div className="mt-12 bg-blue-50/50 rounded-xl">
+          <ProductRecommendations
+            type="similar"
+            productId={productId}
+            limit={6}
+            title="Similar Products"
+            layout="carousel"
+          />
+        </div>
+
+        {/* Customers Also Bought - AI Recommendations */}
+        <div className="mt-12 bg-green-50/50 rounded-xl">
+          <ProductRecommendations
+            type="also-bought"
+            productId={productId}
+            limit={6}
+            title="Customers Also Bought"
+            layout="carousel"
+          />
+        </div>
+
+        {/* Recently Viewed Products */}
+        <RecentlyViewed
+          excludeProductId={productId}
+          maxDisplay={6}
+          displayMode="carousel"
+          title="Recently Viewed"
+          className="mt-12 bg-gray-100/50 rounded-xl"
+        />
       </div>
     </div>
   );

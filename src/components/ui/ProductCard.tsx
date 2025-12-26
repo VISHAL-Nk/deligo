@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { handleError, ERROR_MESSAGES } from "@/lib/api-utils";
+import WishlistButton from "@/components/WishlistButton";
 
 // Your Product interface here...
 interface Product {
@@ -120,7 +121,7 @@ const ProductCard = ({ product }: { product: Product }) => {
   const isLowStock = product.stock > 0 && product.stock <= 5;
 
   return (
-    <div className="border rounded-xl shadow-sm p-3 bg-white flex flex-col min-w-48 hover:shadow-md transition-shadow relative">
+    <div className="border rounded-xl shadow-sm p-3 bg-white flex flex-col min-w-48 hover:shadow-md transition-shadow relative group">
       {/* Discount Badge */}
       {discountPercentage > 0 && (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
@@ -128,7 +129,17 @@ const ProductCard = ({ product }: { product: Product }) => {
         </div>
       )}
       
-      {/* Stock Badge */}
+      {/* Wishlist Button */}
+      <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!isOutOfStock && !isLowStock && (
+          <WishlistButton
+            product={product}
+            size="sm"
+          />
+        )}
+      </div>
+      
+      {/* Stock Badge - positioned below wishlist button when it appears */}
       {isOutOfStock && (
         <div className="absolute top-2 right-2 bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
           Out of Stock

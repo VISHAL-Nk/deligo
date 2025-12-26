@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # notes
-notes/
+# notes/
 
 scripts/
 
@@ -91,3 +91,6 @@ htmlcov/
 meilisearch
 
 *.sh
+
+notes/
+*.pkl

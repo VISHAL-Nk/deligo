@@ -160,7 +160,7 @@ export interface AnalyticsData {
 
 // ============ Configuration ============
 
-const SEARCH_SERVER_URL = process.env.SEARCH_SERVER_URL || process.env.NEXT_PUBLIC_SEARCH_SERVER_URL || 'http://localhost:8001';
+const SEARCH_SERVER_URL = process.env.SEARCH_SERVER_URL || process.env.NEXT_PUBLIC_SEARCH_SERVER_URL || 'http://localhost:8002';
 
 /**
  * Check if the search server is configured

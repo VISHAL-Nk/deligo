@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  recommendation-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deligo-recommendation-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+      - MONGODB_URI=${MONGODB_URI:-mongodb://host.docker.internal:27017}
+      - MONGODB_DB_NAME=${MONGODB_DB_NAME:-deligo}
+      - MODEL_DIR=/app/trained_models
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - WEIGHT_COLLABORATIVE=0.4
+      - WEIGHT_CONTENT=0.35
+      - WEIGHT_POPULARITY=0.25
+      - CACHE_TTL_SECONDS=300
+      - CACHE_MAX_SIZE=1000
+      - RETRAIN_INTERVAL_HOURS=24
+    volumes:
+      # Persist trained models
+      - recommendation_models:/app/trained_models
+      # Persist logs
+      - recommendation_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - deligo-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  recommendation_models:
+    name: deligo-recommendation-models
+  recommendation_logs:
+    name: deligo-recommendation-logs
+
+networks:
+  deligo-network:
+    external: true
+    name: deligo-network

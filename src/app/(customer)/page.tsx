@@ -14,6 +14,8 @@ import {
   ChevronRight,
   ArrowRight
 } from "lucide-react";
+import ProductRecommendations from "@/components/ProductRecommendations";
+import RecentlyViewed from "@/components/RecentlyViewed";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -318,16 +320,33 @@ const Page = () => {
       {/* Limited Time Offers */}
       <LimitedTimeOffers />
 
-      {/* Featured Products Section */}
-      <section className="py-12 px-4 bg-gray-50" data-testid="featured-products">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">Featured Products</h2>
-          <Suspense fallback={<ProductsSkeleton />}>
-            {/* Async data-fetching section */}
-            <ProductsList />
-          </Suspense>
-        </div>
-      </section>
+      {/* Trending Products - Most viewed in last 7 days */}
+      <div className="bg-gray-50">
+        <ProductRecommendations 
+          type="trending" 
+          limit={6} 
+          title="Trending Now"
+          layout="carousel"
+        />
+      </div>
+
+      {/* Personalized Recommendations - Recently viewed + user preferences */}
+      <div className="bg-gradient-to-br from-purple-50 to-indigo-50">
+        <ProductRecommendations 
+          type="personalized" 
+          limit={6}
+          title="Recommended for You"
+          layout="carousel"
+        />
+      </div>
+
+      {/* Recently Viewed Products */}
+      <RecentlyViewed
+        maxDisplay={6}
+        displayMode="carousel"
+        title="Recently Viewed"
+        className="bg-white"
+      />
     </>
   );
 };

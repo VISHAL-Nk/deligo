@@ -20,7 +20,9 @@ export default withAuth(async function middleware(req) {
     '/api/products/public',
     '/api/auth',
     '/api/category',
-    '/api/search/public'
+    '/api/search/public',
+    '/api/recommendations',  // ML Recommendation API
+    '/api/analytics/view'    // View tracking for recommendations
   ];
 
   const pathname = req.nextUrl.pathname;

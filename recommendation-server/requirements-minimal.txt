@@ -1,0 +1,15 @@
+# Minimal FastAPI setup for testing
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database Connectivity
+pymongo==4.6.1
+motor==3.3.2
+
+# Configuration & Environment
+python-dotenv==1.0.0
+pydantic-settings==2.1.0
+
+# Logging
+loguru==0.7.2

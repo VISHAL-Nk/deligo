@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     mongodb_db_name: str = "deligo"
     
     # Server Configuration
-    search_server_port: int = 8001
+    search_server_port: int = 8002
     search_server_host: str = "0.0.0.0"
     
     # CORS Configuration

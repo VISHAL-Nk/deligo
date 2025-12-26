@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { Session } from "@/lib/Session";
 import { dbConnect } from "@/lib/db";
 import Order from "@/models/Orders.models";
+import SellerProfile from "@/models/SellerProfiles.models";
+import Product from "@/models/Products.models";
+import Shipment from "@/models/Shipments.models";
 
 // Get customer orders
 export async function GET() {
@@ -12,6 +15,11 @@ export async function GET() {
     }
 
     await dbConnect();
+
+    // Ensure models are registered
+    SellerProfile;
+    Product;
+    Shipment;
 
     const orders = await Order.find({ userId: session.user.id })
       .populate("sellerId", "businessName")

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import Cart from "@/models/Cart.models";
+import Product from "@/models/Products.models";
 import { Session } from "@/lib/Session";
 
 // GET - Get cart item count
@@ -14,6 +15,9 @@ export async function GET() {
     }
 
     await dbConnect();
+
+    // Ensure Product model is registered
+    Product;
 
     const cart = await Cart.findOne({ userId: session.user.id })
       .populate({
