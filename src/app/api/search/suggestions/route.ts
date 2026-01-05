@@ -22,43 +22,47 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Try advanced search server first
-    if (isSearchServerConfigured()) {
-      try {
-        const autocomplete = await getAutocomplete(query, 10);
-        
-        return new Response(JSON.stringify({
-          suggestions: autocomplete.products.map((p, index) => ({
-            id: `product_${index}`,
-            text: p.name,
-            type: 'product' as const,
-            count: 1,
-            image: p.image,
-            category: p.category_name,
-            price: p.price
-          })),
-          categories: autocomplete.categories.map((c, index) => ({
-            id: `category_${index}`,
-            text: c.name,
-            type: 'category' as const,
-            count: c.product_count
-          })),
-          trending: autocomplete.suggestions.map((s, index) => ({
-            id: `suggestion_${index}`,
-            text: s,
-            type: 'trending' as const,
-            count: 0
-          })),
-          recent: [],
-          source: 'meilisearch'
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } catch (searchError) {
-        console.error('Advanced autocomplete failed, falling back to MongoDB:', searchError);
-        // Fall through to MongoDB
+    // Try search server first for typo tolerance
+    try {
+      // Direct fetch to search server for better reliability
+      const testResponse = await fetch(`http://localhost:8002/autocomplete?q=${encodeURIComponent(query)}&limit=10`);
+      if (testResponse.ok) {
+        const autocomplete = await testResponse.json();
+      
+      return new Response(JSON.stringify({
+        suggestions: autocomplete.products.map((p, index) => ({
+          id: `product_${index}`,
+          text: p.name,
+          type: 'product' as const,
+          count: 1,
+          image: p.image,
+          category: p.category_name,
+          price: p.price
+        })),
+        categories: autocomplete.categories.map((c, index) => ({
+          id: `category_${index}`,
+          text: c.name,
+          type: 'category' as const,
+          count: c.product_count
+        })),
+        trending: autocomplete.suggestions.map((s, index) => ({
+          id: `suggestion_${index}`,
+          text: s,
+          type: 'trending' as const,
+          count: 0
+        })),
+        recent: [],
+        source: 'meilisearch'
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+      } else {
+        throw new Error(`Search server returned ${testResponse.status}`);
       }
+    } catch (searchError) {
+      console.error('Search server failed, falling back to MongoDB:', searchError);
+      // Fall through to MongoDB fallback
     }
 
     // Fallback: MongoDB aggregation

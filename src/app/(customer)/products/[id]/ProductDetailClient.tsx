@@ -7,9 +7,9 @@ import { ShoppingCart, Share2, Star, Truck, Shield, RotateCcw, ArrowLeft, Check 
 import { useSession } from 'next-auth/react';
 import ProductReviews from '@/components/ProductReviews';
 import ProductRecommendations from '@/components/ProductRecommendations';
-import RecentlyViewed from '@/components/RecentlyViewed';
+import UserRecentlyViewed from '@/components/UserRecentlyViewed';
 import WishlistButton from '@/components/WishlistButton';
-import { addToRecentlyViewed } from '@/lib/recently-viewed';
+import { addToUserRecentlyViewed } from '@/lib/user-recently-viewed';
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -79,7 +79,7 @@ export default function ProductDetailClient({ productId }: { productId: string }
   // Add to recently viewed when product loads
   useEffect(() => {
     if (product) {
-      addToRecentlyViewed({
+      addToUserRecentlyViewed({
         _id: product._id,
         name: product.name,
         price: product.price,
@@ -478,7 +478,7 @@ export default function ProductDetailClient({ productId }: { productId: string }
         </div>
 
         {/* Recently Viewed Products */}
-        <RecentlyViewed
+        <UserRecentlyViewed
           excludeProductId={productId}
           maxDisplay={6}
           displayMode="carousel"

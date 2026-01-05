@@ -166,7 +166,8 @@ const SEARCH_SERVER_URL = process.env.SEARCH_SERVER_URL || process.env.NEXT_PUBL
  * Check if the search server is configured
  */
 export function isSearchServerConfigured(): boolean {
-  return !!process.env.SEARCH_SERVER_URL || !!process.env.NEXT_PUBLIC_SEARCH_SERVER_URL;
+  // For now, always assume search server is available since we have a default URL
+  return true;
 }
 
 // ============ Search Functions ============

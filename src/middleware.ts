@@ -20,7 +20,7 @@ export default withAuth(async function middleware(req) {
     '/api/products/public',
     '/api/auth',
     '/api/category',
-    '/api/search/public',
+    '/api/search',           // All search endpoints should be public
     '/api/recommendations',  // ML Recommendation API
     '/api/analytics/view'    // View tracking for recommendations
   ];
@@ -80,7 +80,7 @@ export default withAuth(async function middleware(req) {
   }
 
   // If no user and accessing protected routes, redirect to signin
-  if (!user) {
+  if (!user ) {
     return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
 

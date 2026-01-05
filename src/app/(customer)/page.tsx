@@ -15,7 +15,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import ProductRecommendations from "@/components/ProductRecommendations";
-import RecentlyViewed from "@/components/RecentlyViewed";
+import UserRecentlyViewed from "@/components/UserRecentlyViewed";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -341,7 +341,7 @@ const Page = () => {
       </div>
 
       {/* Recently Viewed Products */}
-      <RecentlyViewed
+      <UserRecentlyViewed
         maxDisplay={6}
         displayMode="carousel"
         title="Recently Viewed"

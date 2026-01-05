@@ -94,3 +94,9 @@ meilisearch
 
 notes/
 *.pkl
+
+CSE.zip
+
+
+recommendation-server/
+search-server/

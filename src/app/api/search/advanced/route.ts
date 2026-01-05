@@ -36,7 +36,11 @@ async function checkSearchServer(): Promise<boolean> {
   }
 
   try {
-    searchServerAvailable = await isSearchServerAvailable();
+    // Direct fetch to test connection
+    const response = await fetch('http://localhost:8002/health', { 
+      signal: AbortSignal.timeout(3000) 
+    });
+    searchServerAvailable = response.ok;
     lastHealthCheck = now;
     return searchServerAvailable;
   } catch {
@@ -111,19 +115,47 @@ export async function GET(req: NextRequest) {
         if (hasDiscount === 'true') options.hasDiscount = true;
 
         // Search using advanced search server
-        const response = await searchProducts(query, options);
-
-        // Convert to legacy format for backward compatibility
-        const legacyResponse = convertToLegacyFormat(response);
-
-        return NextResponse.json({
-          ...legacyResponse,
-          // Include additional fields from advanced search
-          facets: response.facets,
-          processingTimeMs: response.processing_time_ms,
-          queryCorrection: response.query_corrected,
-          source: 'meilisearch',
+        const searchResponse = await fetch('http://localhost:8002/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query,
+            page: options.page || 1,
+            limit: options.limit || 20,
+            category_id: options.categoryId,
+            category_name: options.categoryName,
+            seller_id: options.sellerId,
+            min_price: options.minPrice,
+            max_price: options.maxPrice,
+            in_stock: options.inStock,
+            min_rating: options.minRating,
+            has_discount: options.hasDiscount,
+            sort_by: options.sortBy || 'relevance',
+            sort_order: options.sortOrder || 'desc',
+            highlight: options.highlight ?? true,
+            show_facets: options.showFacets ?? true,
+          }),
         });
+
+        if (searchResponse.ok) {
+          const response = await searchResponse.json();
+          
+          // Convert to legacy format for backward compatibility
+          const legacyResponse = convertToLegacyFormat(response);
+
+          return NextResponse.json({
+            ...legacyResponse,
+            // Include additional fields from advanced search
+            facets: response.facets,
+            processingTimeMs: response.processing_time_ms,
+            queryCorrection: response.query_corrected,
+            source: 'meilisearch',
+          });
+        } else {
+          throw new Error(`Search server returned ${searchResponse.status}`);
+        }
       } catch (searchError) {
         console.error('Advanced search failed, falling back to MongoDB:', searchError);
         // Fall through to MongoDB search
