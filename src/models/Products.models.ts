@@ -78,6 +78,15 @@ const ProductSchema = new mongoose.Schema(
       enum: ["active", "draft", "banned", "deleted"],
       default: "draft",
     },
+    returnPolicy: {
+      enabled: { type: Boolean, default: true },
+      days: { type: Number, default: 7 }, // Return window in days
+      type: { 
+        type: String, 
+        enum: ["full-refund", "replacement", "store-credit", "no-return"], 
+        default: "full-refund" 
+      }
+    },
   },
   { timestamps: true }
 );

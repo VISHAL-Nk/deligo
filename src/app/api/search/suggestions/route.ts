@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
         const autocomplete = await testResponse.json();
       
       return new Response(JSON.stringify({
-        suggestions: autocomplete.products.map((p, index) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        suggestions: autocomplete.products.map((p: any, index: number) => ({
           id: `product_${index}`,
           text: p.name,
           type: 'product' as const,
@@ -39,13 +40,15 @@ export async function GET(req: NextRequest) {
           category: p.category_name,
           price: p.price
         })),
-        categories: autocomplete.categories.map((c, index) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        categories: autocomplete.categories.map((c: any, index: number) => ({
           id: `category_${index}`,
           text: c.name,
           type: 'category' as const,
           count: c.product_count
         })),
-        trending: autocomplete.suggestions.map((s, index) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        trending: autocomplete.suggestions.map((s: any, index: number) => ({
           id: `suggestion_${index}`,
           text: s,
           type: 'trending' as const,
@@ -129,7 +132,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Format the response
-    const suggestions = productSuggestions.map((product, index) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const suggestions = productSuggestions.map((product: any, index: number) => ({
       id: `product_${index}`,
       text: product._id,
       type: 'product' as const,
@@ -139,14 +143,16 @@ export async function GET(req: NextRequest) {
       price: product.price
     }));
 
-    const categories = categorySuggestions.map((cat, index) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const categories = categorySuggestions.map((cat: any, index: number) => ({
       id: `category_${index}`,
       text: cat._id,
       type: 'category' as const,
       count: cat.count
     }));
 
-    const trending = trendingSuggestions.map((trend, index) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const trending = trendingSuggestions.map((trend: any, index: number) => ({
       id: `trending_${index}`,
       text: trend._id,
       type: 'trending' as const,

@@ -20,7 +20,10 @@ import {
   Calendar,
   IndianRupee,
   Filter,
-  Search
+  Search,
+  RotateCcw,
+  X,
+  AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -30,8 +33,21 @@ interface OrderItem {
     name: string;
     price: number;
     images: string[];
+    returnPolicy?: {
+      enabled: boolean;
+      days: number;
+      type: string;
+    };
   };
   quantity: number;
+}
+
+interface ReturnRequest {
+  requestedAt?: string;
+  reason?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  processedAt?: string;
+  adminNotes?: string;
 }
 
 interface Order {
@@ -40,7 +56,7 @@ interface Order {
     businessName: string;
   };
   items: OrderItem[];
-  status: 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  status: 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | 'return-requested' | 'return-approved' | 'return-rejected';
   totalAmount: number;
   taxAmount: number;
   discountAmount: number;
@@ -54,11 +70,12 @@ interface Order {
     postalCode: string;
     country: string;
   };
+  returnRequest?: ReturnRequest;
   createdAt: string;
   updatedAt: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { color: string; icon: React.ElementType; label: string }> = {
   pending: {
     color: 'text-yellow-600 bg-yellow-100',
     icon: Clock,
@@ -93,6 +110,21 @@ const statusConfig = {
     color: 'text-gray-600 bg-gray-100',
     icon: RefreshCw,
     label: 'Refunded'
+  },
+  'return-requested': {
+    color: 'text-amber-600 bg-amber-100',
+    icon: RotateCcw,
+    label: 'Return Requested'
+  },
+  'return-approved': {
+    color: 'text-teal-600 bg-teal-100',
+    icon: CheckCircle,
+    label: 'Return Approved'
+  },
+  'return-rejected': {
+    color: 'text-red-600 bg-red-100',
+    icon: XCircle,
+    label: 'Return Rejected'
   }
 };
 
@@ -105,6 +137,12 @@ export default function OrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  
+  // Return modal state
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [returnOrderId, setReturnOrderId] = useState<string | null>(null);
+  const [returnReason, setReturnReason] = useState('');
+  const [returningOrder, setReturningOrder] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -184,28 +222,117 @@ export default function OrdersPage() {
   };
 
   const canReturnOrder = (order: Order) => {
+    // Can only return delivered orders
+    if (order.status !== 'delivered') return false;
+    
+    // Check if return already requested
+    if (order.returnRequest?.status) return false;
+    
     const deliveredDate = new Date(order.updatedAt);
     const now = new Date();
     const daysSinceDelivery = (now.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24);
     
-    return order.status === 'delivered' && daysSinceDelivery <= 7;
+    // Check if any product allows returns
+    const maxReturnDays = Math.max(...order.items.map(item => {
+      const policy = item.productId.returnPolicy;
+      if (!policy?.enabled || policy.type === 'no-return') return 0;
+      return policy.days || 7;
+    }));
+    
+    return daysSinceDelivery <= maxReturnDays;
+  };
+
+  const getReturnDaysRemaining = (order: Order) => {
+    const deliveredDate = new Date(order.updatedAt);
+    const now = new Date();
+    const daysSinceDelivery = Math.floor((now.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const maxReturnDays = Math.max(...order.items.map(item => {
+      const policy = item.productId.returnPolicy;
+      if (!policy?.enabled || policy.type === 'no-return') return 0;
+      return policy.days || 7;
+    }));
+    
+    return Math.max(0, maxReturnDays - daysSinceDelivery);
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
-    
+    const confirmToast = toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="font-medium">Cancel this order?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const response = await fetch(`/api/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                  });
+                  
+                  if (!response.ok) throw new Error('Failed to cancel order');
+                  
+                  toast.success('Order cancelled successfully');
+                  fetchOrders();
+                } catch (error) {
+                  console.error('Error cancelling order:', error);
+                  toast.error('Failed to cancel order');
+                }
+              }}
+              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+            >
+              Yes, Cancel
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
+            >
+              Keep Order
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 10000 }
+    );
+    return confirmToast;
+  };
+
+  const openReturnModal = (orderId: string) => {
+    setReturnOrderId(orderId);
+    setReturnReason('');
+    setReturnModalOpen(true);
+  };
+
+  const handleReturnOrder = async () => {
+    if (!returnOrderId || returnReason.trim().length < 10) {
+      toast.error('Please provide a reason for the return (at least 10 characters)');
+      return;
+    }
+
+    setReturningOrder(true);
     try {
-      const response = await fetch(`/api/orders/${orderId}/cancel`, {
+      const response = await fetch(`/api/orders/${returnOrderId}/return`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: returnReason.trim() }),
       });
-      
-      if (!response.ok) throw new Error('Failed to cancel order');
-      
-      toast.success('Order cancelled successfully');
-      fetchOrders();
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Return request submitted successfully');
+        setReturnModalOpen(false);
+        setReturnOrderId(null);
+        setReturnReason('');
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'Failed to submit return request');
+      }
     } catch (error) {
-      console.error('Error cancelling order:', error);
-      toast.error('Failed to cancel order');
+      console.error('Error requesting return:', error);
+      toast.error('Failed to submit return request');
+    } finally {
+      setReturningOrder(false);
     }
   };
 
@@ -284,6 +411,9 @@ export default function OrdersPage() {
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="refunded">Refunded</option>
+                <option value="return-requested">Return Requested</option>
+                <option value="return-approved">Return Approved</option>
+                <option value="return-rejected">Return Rejected</option>
               </select>
             </div>
           </div>
@@ -312,7 +442,8 @@ export default function OrdersPage() {
         ) : (
           <div className="space-y-6">
             {filteredOrders.map((order) => {
-              const StatusIcon = statusConfig[order.status].icon;
+              const config = statusConfig[order.status] || statusConfig.pending;
+              const StatusIcon = config.icon;
               const isExpanded = expandedOrder === order._id;
               
               return (
@@ -329,9 +460,9 @@ export default function OrdersPage() {
                             Placed on {formatDate(order.createdAt)}
                           </p>
                         </div>
-                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusConfig[order.status].color}`}>
+                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.color}`}>
                           <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusConfig[order.status].label}
+                          {config.label}
                         </div>
                       </div>
                       <div className="text-right">
@@ -343,6 +474,30 @@ export default function OrdersPage() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Return Status Badge */}
+                    {order.returnRequest?.status && (
+                      <div className={`mb-4 p-3 rounded-lg flex items-start gap-2 ${
+                        order.returnRequest.status === 'pending' ? 'bg-amber-50 text-amber-800' :
+                        order.returnRequest.status === 'approved' ? 'bg-green-50 text-green-800' :
+                        'bg-red-50 text-red-800'
+                      }`}>
+                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">
+                            Return {order.returnRequest.status.charAt(0).toUpperCase() + order.returnRequest.status.slice(1)}
+                          </p>
+                          <p className="text-sm mt-1">
+                            Reason: {order.returnRequest.reason}
+                          </p>
+                          {order.returnRequest.adminNotes && (
+                            <p className="text-sm mt-1">
+                              Note: {order.returnRequest.adminNotes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Order Items Preview */}
                     <div className="flex items-center gap-4 mb-4">
@@ -419,9 +574,12 @@ export default function OrdersPage() {
                       )}
                       
                       {canReturnOrder(order) && (
-                        <button className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors">
-                          <RefreshCw className="w-4 h-4" />
-                          Return
+                        <button 
+                          onClick={() => openReturnModal(order._id)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Return ({getReturnDaysRemaining(order)} days left)
                         </button>
                       )}
                       
@@ -454,6 +612,14 @@ export default function OrdersPage() {
                                 <div className="flex-1">
                                   <h5 className="font-medium text-gray-900">{item.productId.name}</h5>
                                   <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                                  {item.productId.returnPolicy && (
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      {item.productId.returnPolicy.enabled 
+                                        ? `${item.productId.returnPolicy.days}-day ${item.productId.returnPolicy.type} policy`
+                                        : 'No returns'
+                                      }
+                                    </p>
+                                  )}
                                 </div>
                                 <div className="text-right">
                                   <p className="font-semibold text-gray-900">
@@ -546,6 +712,56 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Return Request Modal */}
+      {returnModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Request Return</h3>
+                <button 
+                  onClick={() => setReturnModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Please provide a reason for returning this order. Your return request will be reviewed by the seller.
+                </p>
+                <textarea
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  placeholder="Why are you returning this order? (min 10 characters)"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 min-h-[120px]"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  {returnReason.length}/10 minimum characters
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleReturnOrder}
+                  disabled={returningOrder || returnReason.trim().length < 10}
+                  className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {returningOrder ? 'Submitting...' : 'Submit Return Request'}
+                </button>
+                <button
+                  onClick={() => setReturnModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

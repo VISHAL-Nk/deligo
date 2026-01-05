@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Upload, X, Save, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import AIImageGenerator from '@/components/seller/AIImageGenerator';
+import { toastSuccess, toastError, toastWarning, toastInfo } from '@/lib/toast';
 
 interface Category {
   _id: string;
@@ -64,7 +65,7 @@ export default function NewProductPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + imageFiles.length + imagePreviews.length > 5) {
-      alert('Maximum 5 images allowed');
+      toastWarning('Maximum 5 images allowed');
       return;
     }
 
@@ -100,7 +101,7 @@ export default function NewProductPage() {
     const imagesToAdd = images.slice(0, remainingSlots);
     
     if (imagesToAdd.length < images.length) {
-      alert(`Only ${remainingSlots} image slot(s) available. Added ${imagesToAdd.length} of ${images.length} selected images.`);
+      toastInfo(`Only ${remainingSlots} image slot(s) available. Added ${imagesToAdd.length} of ${images.length} selected images.`);
     }
     
     setImagePreviews((prev) => [...prev, ...imagesToAdd]);
@@ -166,13 +167,14 @@ export default function NewProductPage() {
       const data = await response.json();
 
       if (data.success) {
+        toastSuccess('Product created successfully!');
         router.push('/seller/products');
       } else {
-        alert(data.message || 'Failed to create product');
+        toastError(data.message || 'Failed to create product');
       }
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Failed to create product');
+      toastError('Failed to create product');
     } finally {
       setLoading(false);
     }

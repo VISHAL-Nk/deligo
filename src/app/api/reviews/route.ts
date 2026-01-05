@@ -21,18 +21,21 @@ export async function GET(request: Request) {
       .lean();
 
     // Fetch user profiles for all reviewers to get their names
-    const userIds = reviews.map((r: { userId?: { _id?: string } }) => r.userId?._id).filter(Boolean);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userIds = (reviews as any[]).map((r: any) => r.userId?._id).filter(Boolean);
     const userProfiles = await UserProfile.find({ userId: { $in: userIds } })
       .select('userId fullName')
       .lean();
 
     // Create a map of userId to fullName
     const profileMap = new Map(
-      userProfiles.map((p: { userId: { toString: () => string }; fullName?: string }) => [p.userId.toString(), p.fullName])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (userProfiles as any[]).map((p: any) => [p.userId.toString(), p.fullName])
     );
 
     // Add name to each review
-    const reviewsWithNames = reviews.map((review: { userId?: { _id?: { toString: () => string }; email?: string }; rating: number; comment?: string; images?: string[]; createdAt: Date; _id: string }) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reviewsWithNames = (reviews as any[]).map((review: any) => ({
       ...review,
       userId: {
         ...review.userId,

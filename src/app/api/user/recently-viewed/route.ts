@@ -47,8 +47,10 @@ export async function GET() {
     }).lean();
 
     // Create a map for quick lookup
-    const productMap = new Map<string, unknown>();
-    products.forEach((product: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const productMap = new Map<string, any>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    products.forEach((product: any) => {
       productMap.set(product._id.toString(), product);
     });
 

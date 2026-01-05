@@ -36,10 +36,6 @@ export default function AvailableShipmentsPage() {
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAvailableShipments();
-  }, []);
-
   const fetchAvailableShipments = async () => {
     try {
       setLoading(true);
@@ -47,7 +43,7 @@ export default function AvailableShipmentsPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setShipments(data.data.shipments || []);
+        setShipments(data.data || []);
       } else {
         toast.error(data.message || 'Failed to fetch available shipments');
       }
@@ -58,6 +54,10 @@ export default function AvailableShipmentsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAvailableShipments();
+  }, []);
 
   const acceptShipment = async (shipmentId: string) => {
     try {
@@ -72,7 +72,6 @@ export default function AvailableShipmentsPage() {
 
       if (response.ok && data.success) {
         toast.success('Shipment accepted! Redirecting to delivery details...');
-        // Redirect to the delivery details page
         router.push(`/driver/delivery/${shipmentId}`);
       } else {
         toast.error(data.error || data.message || 'Failed to accept shipment');
@@ -103,13 +102,11 @@ export default function AvailableShipmentsPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Available Deliveries</h1>
           <p className="text-gray-600">Accept deliveries and start earning</p>
         </div>
 
-        {/* Shipments List */}
         {shipments.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
             <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
@@ -126,7 +123,7 @@ export default function AvailableShipmentsPage() {
                 className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
-                  <div className="flex-1">
+                  <div>
                     <div className="flex items-center gap-2 mb-2">
                       <Package className="w-5 h-5 text-green-600" />
                       <h3 className="font-bold text-gray-900">
@@ -157,7 +154,6 @@ export default function AvailableShipmentsPage() {
                   </div>
                 </div>
 
-                {/* Delivery Address */}
                 <div className="border-t pt-4 mb-4">
                   <div className="flex items-start gap-2 text-sm">
                     <MapPin className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
@@ -179,35 +175,45 @@ export default function AvailableShipmentsPage() {
                   </div>
                 </div>
 
-                {/* Items */}
-                {shipment.orderId?.items && shipment.orderId.items.length > 0 && (
-                  <div className="border-t pt-4 mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Items:</p>
-                    <div className="space-y-1">
-                      {shipment.orderId.items.map((item, idx) => (
-                        <p key={idx} className="text-sm text-gray-600">
-                          • {item.productId?.name || 'Product'} × {item.quantity}
-                        </p>
-                      ))}
-                    </div>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex -space-x-2 overflow-hidden">
+                    {shipment.orderId?.items?.slice(0, 3).map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center overflow-hidden"
+                      >
+                        {item.productId?.images?.[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.productId.images[0]}
+                            alt={item.productId.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Package className="h-4 w-4 text-gray-400" />
+                        )}
+                      </div>
+                    ))}
+                    {shipment.orderId?.items?.length > 3 && (
+                      <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-50 flex items-center justify-center text-xs font-medium text-gray-500">
+                        +{shipment.orderId.items.length - 3}
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {/* Accept Button */}
-                <button
-                  onClick={() => acceptShipment(shipment._id)}
-                  disabled={accepting === shipment._id}
-                  className="w-full md:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="w-5 h-5" />
-                  {accepting === shipment._id ? 'Accepting...' : 'Accept Delivery'}
-                </button>
+                  <button
+                    onClick={() => acceptShipment(shipment._id)}
+                    disabled={accepting === shipment._id}
+                    className="w-full md:w-auto bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    {accepting === shipment._id ? 'Accepting...' : 'Accept Delivery'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Refresh Button */}
         <div className="mt-6 text-center">
           <button
             onClick={fetchAvailableShipments}

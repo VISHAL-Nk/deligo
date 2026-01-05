@@ -4,13 +4,11 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { dbConnect } from '@/lib/db';
 import Order from '@/models/Orders.models';
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
 
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function POST(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any) as any;
@@ -22,7 +20,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const { id: orderId } = context.params;
+    const { id: orderId } = await params;
 
     await dbConnect();
 

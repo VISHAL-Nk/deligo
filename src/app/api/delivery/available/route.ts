@@ -1,13 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { dbConnect } from "@/lib/db";
 import Shipment from "@/models/Shipments.models";
 import DeliveryProfile from "@/models/DeliveryProfiles.models";
+import Order from "@/models/Orders.models";
+import Product from "@/models/Products.models";
+import SellerProfile from "@/models/SellerProfiles.models";
 
 // GET /api/delivery/available - Get available shipments for delivery
-export async function GET() {
+export async function GET(request: NextRequest) {
   await dbConnect();
+
+  // Ensure models are registered for population
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _models = { Order, Product, SellerProfile };
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,11 +64,17 @@ export async function GET() {
     })
       .populate({
         path: "orderId",
-        select: "totalAmount items shippingAddress",
-        populate: {
-          path: "items.productId",
-          select: "name images"
-        }
+        select: "totalAmount items shippingAddress sellerId",
+        populate: [
+          {
+            path: "items.productId",
+            select: "name images"
+          },
+          {
+            path: "sellerId",
+            select: "businessName store"
+          }
+        ]
       })
       .sort({ createdAt: -1 })
       .limit(50);
@@ -69,10 +82,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: true,
-        data: {
-          shipments: availableShipments,
-          count: availableShipments.length
-        },
+        data: availableShipments,
       },
       { status: 200 }
     );

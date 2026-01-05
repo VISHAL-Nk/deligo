@@ -5,13 +5,11 @@ import { dbConnect } from '@/lib/db';
 import UserProfile from '@/models/UserProfiles.models';
 import mongoose from 'mongoose';
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
 
-export async function DELETE(request: NextRequest, context: RouteContext) {
+export async function DELETE(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any) as any;
@@ -23,7 +21,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const { id: addressId } = context.params;
+    const { id: addressId } = await params;
 
     if (!addressId || !mongoose.Types.ObjectId.isValid(addressId)) {
       return NextResponse.json(

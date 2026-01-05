@@ -25,6 +25,8 @@ ORDERS {
 */
 
 import mongoose from "mongoose";
+import "./Products.models";
+import "./SellerProfiles.models";
 
 const OrderSchema = new mongoose.Schema(
   {
@@ -66,8 +68,18 @@ const OrderSchema = new mongoose.Schema(
         "delivered",
         "cancelled",
         "refunded",
+        "return-requested",
+        "return-approved",
+        "return-rejected",
       ],
       default: "pending",
+    },
+    returnRequest: {
+      requestedAt: { type: Date },
+      reason: { type: String },
+      status: { type: String, enum: ["pending", "approved", "rejected"] },
+      processedAt: { type: Date },
+      adminNotes: { type: String }
     },
     totalAmount: { type: Number, required: true },
     taxAmount: { type: Number, default: 0 },

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Upload, X, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { toastSuccess, toastError, toastWarning } from '@/lib/toast';
 
 interface Category {
   _id: string;
@@ -108,12 +109,12 @@ export default function EditProductPage() {
         });
         setExistingImages(product.images || []);
       } else {
-        alert('Failed to load product');
+        toastError('Failed to load product');
         router.push('/seller/products');
       }
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert('Failed to load product');
+      toastError('Failed to load product');
       router.push('/seller/products');
     } finally {
       setFetchingProduct(false);
@@ -125,7 +126,7 @@ export default function EditProductPage() {
     const totalImages = existingImages.length + newImageFiles.length + files.length;
     
     if (totalImages > 5) {
-      alert('Maximum 5 images allowed');
+      toastWarning('Maximum 5 images allowed');
       return;
     }
 
@@ -187,11 +188,11 @@ export default function EditProductPage() {
       if (data.success) {
         router.push('/seller/products');
       } else {
-        alert(data.message || 'Failed to update product');
+        toastError(data.message || 'Failed to update product');
       }
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Failed to update product');
+      toastError('Failed to update product');
     } finally {
       setLoading(false);
     }
