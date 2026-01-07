@@ -1,30 +1,47 @@
 import nodemailer from "nodemailer";
+import { generateVerificationEmail } from "./email-templates/verification";
+import { generateOrderConfirmationEmail } from "./email-templates/order-confirmation";
+import { generateShippingUpdateEmail } from "./email-templates/shipping-update";
+import { generateWelcomeEmail } from "./email-templates/welcome";
 
-export async function sendVerificationEmail(email: string, token: string) {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${token}`;
-
-  const transporter = nodemailer.createTransport({
-    service: "Gmail", // or SMTP config
+// Create reusable transporter
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: "Gmail",
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
   });
+}
 
+// Send email verification
+export async function sendVerificationEmail(email: string, token: string, userName?: string) {
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${token}`;
+  
+  const html = generateVerificationEmail({
+    userName,
+    verificationUrl,
+    expiresIn: '24 hours'
+  });
+
+  const transporter = createTransporter();
+  
   await transporter.sendMail({
     from: `"Deligo" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verify your email - Deligo",
-    html: `<p>Click below to verify your email:</p>
-           <a href="${url}">${url}</a>`,
+    html,
   });
 }
 
+// Send order confirmation with OTP
 export async function sendOrderConfirmationEmail(
-  email: string, 
-  orderId: string, 
+  email: string,
+  orderId: string,
   otpCode: string,
   orderDetails: {
+    userName?: string;
     items: Array<{ name: string; quantity: number; price: number }>;
     totalAmount: number;
     shippingAddress: {
@@ -35,37 +52,85 @@ export async function sendOrderConfirmationEmail(
     };
   }
 ) {
-  const transporter = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+  const html = generateOrderConfirmationEmail({
+    userName: orderDetails.userName,
+    orderId,
+    otpCode,
+    items: orderDetails.items,
+    totalAmount: orderDetails.totalAmount,
+    shippingAddress: orderDetails.shippingAddress,
+    orderDate: new Date(),
+    estimatedDelivery: '3-5 business days'
   });
 
-  const itemsList = orderDetails.items
-    .map(item => `<li>${item.name} x ${item.quantity} - ₹${item.price * item.quantity}</li>`)
-    .join('');
+  const transporter = createTransporter();
 
   await transporter.sendMail({
     from: `"Deligo" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: `Order Confirmation - ${orderId}`,
-    html: `
-      <h2>Order Confirmed!</h2>
-      <p>Your order has been successfully placed.</p>
-      <p><strong>Order ID:</strong> ${orderId}</p>
-      <p><strong>Delivery OTP:</strong> <span style="font-size: 24px; font-weight: bold; color: #2563eb;">${otpCode}</span></p>
-      <p>Please share this OTP with the delivery person when they deliver your order.</p>
-      
-      <h3>Order Details:</h3>
-      <ul>${itemsList}</ul>
-      <p><strong>Total Amount:</strong> ₹${orderDetails.totalAmount}</p>
-      
-      <h3>Shipping Address:</h3>
-      <p>${orderDetails.shippingAddress.street}, ${orderDetails.shippingAddress.city}, ${orderDetails.shippingAddress.state} - ${orderDetails.shippingAddress.zipCode}</p>
-      
-      <p>Thank you for shopping with Deligo!</p>
-    `,
+    html,
+  });
+}
+
+// Send shipping status update
+export async function sendShippingUpdateEmail(
+  email: string,
+  orderId: string,
+  shippingDetails: {
+    userName?: string;
+    status: 'confirmed' | 'packed' | 'shipped' | 'out-for-delivery' | 'delivered';
+    trackingNumber?: string;
+    trackingUrl?: string;
+    driverName?: string;
+    driverPhone?: string;
+    estimatedDelivery?: string;
+    deliveredAt?: Date;
+  }
+) {
+  const html = generateShippingUpdateEmail({
+    userName: shippingDetails.userName,
+    orderId,
+    status: shippingDetails.status,
+    trackingNumber: shippingDetails.trackingNumber,
+    trackingUrl: shippingDetails.trackingUrl,
+    driverName: shippingDetails.driverName,
+    driverPhone: shippingDetails.driverPhone,
+    estimatedDelivery: shippingDetails.estimatedDelivery,
+    deliveredAt: shippingDetails.deliveredAt,
+  });
+
+  const transporter = createTransporter();
+
+  const statusTitles: Record<typeof shippingDetails.status, string> = {
+    'confirmed': 'Order Confirmed',
+    'packed': 'Order Packed',
+    'shipped': 'Order Shipped',
+    'out-for-delivery': 'Out for Delivery',
+    'delivered': 'Order Delivered',
+  };
+
+  await transporter.sendMail({
+    from: `"Deligo" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `${statusTitles[shippingDetails.status]} - Order #${orderId}`,
+    html,
+  });
+}
+
+// Send welcome email
+export async function sendWelcomeEmail(email: string, userName: string) {
+  const html = generateWelcomeEmail({
+    userName,
+    browseUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  });
+
+  const transporter = createTransporter();
+
+  await transporter.sendMail({
+    from: `"Deligo" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `Welcome to Deligo, ${userName}! 🎉`,
+    html,
   });
 }
