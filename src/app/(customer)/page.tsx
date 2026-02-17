@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import ProductRecommendations from "@/components/ProductRecommendations";
 import UserRecentlyViewed from "@/components/UserRecentlyViewed";
+import AdBanner from "@/components/ads/AdBanner";
+import SidebarAds from "@/components/ads/SidebarAds";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -43,6 +45,7 @@ interface Product {
   createdAt: string;
   updatedAt: string;
 }
+
 const heroConfig = {
   title: "Big Savings Festival",
   content: "Discounts up to 60% on electronics, fashion & more!",
@@ -225,129 +228,61 @@ const FeaturedCategories = () => {
   );
 };
 
-// Limited Time Offers Component
-const LimitedTimeOffers = () => {
-  const offers = [
-    {
-      id: 1,
-      name: "Cotton T-Shirt",
-      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop",
-      discount: "40% OFF",
-      originalPrice: 1500,
-      salePrice: 900
-    },
-    {
-      id: 2,
-      name: "Wireless Headphones",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop",
-      discount: "38% OFF",
-      originalPrice: 2500,
-      salePrice: 1550
-    },
-    {
-      id: 3,
-      name: "Designer Handbag",
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&h=200&fit=crop",
-      discount: "30% OFF",
-      originalPrice: 3000,
-      salePrice: 2100
-    }
-  ];
+// Helper to check if user is logged in on the server side
+async function isUserLoggedIn(): Promise<boolean> {
+  const cookieStore = await cookies();
+  // next-auth stores the session token in this cookie
+  const sessionToken = cookieStore.get("next-auth.session-token") || cookieStore.get("__Secure-next-auth.session-token");
+  return !!sessionToken;
+}
+
+const Page = async () => {
+  const loggedIn = await isUserLoggedIn();
 
   return (
-    <>
-      <section className="bg-green-600 py-12 px-4" data-testid="limited-time-offers">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Limited Time Offers
-              </h2>
-              <p className="text-green-100 text-lg mb-6">
-                Hurry up! Grab these exclusive discounts before they&apos;re gone.
-              </p>
-              <Link
-                href="/products?offers=true"
-                className="inline-flex items-center gap-2 bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-                data-testid="shop-now-btn"
-              >
-                Shop Now
-                <ArrowRight size={20} />
-              </Link>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto">
-              {offers.map((offer) => (
-                <div key={offer.id} className="flex-shrink-0 bg-white rounded-lg p-4 min-w-48">
-                  <div className="relative mb-4">
-                    <Image
-                      src={offer.image}
-                      alt={offer.name}
-                      width={192}
-                      height={128}
-                      className="w-full h-32 object-cover rounded-lg"
-                      loading="lazy"
-                      sizes="192px"
-                    />
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-black text-xs font-bold px-2 py-1 rounded shadow-md">
-                      {offer.discount}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800 mb-3 text-sm line-clamp-2">{offer.name}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-green-600 text-sm">₹{offer.salePrice}</span>
-                    <span className="text-xs text-gray-500 line-through">₹{offer.originalPrice}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-};
-
-const Page = () => {
-  return (
-    <>
+    <SidebarAds>
       {/* Hero Section */}
       <HeroSection />
 
       {/* Featured Categories */}
       <FeaturedCategories />
 
-      {/* Limited Time Offers */}
-      <LimitedTimeOffers />
+      {/* Advertisement Banner (replaces Limited Time Offers) */}
+      <AdBanner />
 
-      {/* Trending Products - Most viewed in last 7 days */}
+      {/* Trending Products - Most viewed in last 7 days (shown to everyone) */}
       <div className="bg-gray-50">
-        <ProductRecommendations 
-          type="trending" 
-          limit={6} 
+        <ProductRecommendations
+          type="trending"
+          limit={6}
           title="Trending Now"
           layout="carousel"
         />
       </div>
 
-      {/* Personalized Recommendations - Recently viewed + user preferences */}
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50">
-        <ProductRecommendations 
-          type="personalized" 
-          limit={6}
-          title="Recommended for You"
-          layout="carousel"
-        />
-      </div>
+      {/* Personalized sections — only for logged-in users */}
+      {loggedIn && (
+        <>
+          {/* Personalized Recommendations - Recently viewed + user preferences */}
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50">
+            <ProductRecommendations
+              type="personalized"
+              limit={6}
+              title="Recommended for You"
+              layout="carousel"
+            />
+          </div>
 
-      {/* Recently Viewed Products */}
-      <UserRecentlyViewed
-        maxDisplay={6}
-        displayMode="carousel"
-        title="Recently Viewed"
-        className="bg-white"
-      />
-    </>
+          {/* Recently Viewed Products */}
+          <UserRecentlyViewed
+            maxDisplay={6}
+            displayMode="carousel"
+            title="Recently Viewed"
+            className="bg-white"
+          />
+        </>
+      )}
+    </SidebarAds>
   );
 };
 

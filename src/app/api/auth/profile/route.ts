@@ -5,7 +5,7 @@ import { dbConnect, dbDisconnect } from "@/lib/db";
 import User from "@/models/User.models";
 import UserProfile from "@/models/UserProfiles.models";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../[...nextauth]/route";
+import { authOptions } from '@/lib/auth-options';
 import { profileSchema, ProfileType } from "@/schema/profileSchema";
 
 export async function GET() {

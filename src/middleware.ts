@@ -32,21 +32,21 @@ export default withAuth(async function middleware(req) {
     // Still apply rate limiting
     const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
     const { success } = await ratelimit.limit(ip);
-    
+
     if (!success) {
       return new NextResponse("Too many requests", { status: 429 });
     }
-    
+
     return NextResponse.next();
   }
 
   // Rate limiting check - get client IP
   const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
-  
+
   // Apply rate limiting to API routes
   if (req.nextUrl.pathname.startsWith("/api/")) {
     const { success } = await ratelimit.limit(ip);
-    
+
     if (!success) {
       return new NextResponse("Too many requests", { status: 429 });
     }
@@ -54,18 +54,18 @@ export default withAuth(async function middleware(req) {
 
   const user = req.nextauth.token;
   const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
-  
+
   // Helper function to clean callback URL and prevent loops
   const getCleanCallbackUrl = (url: string | null) => {
     if (!url) return null;
-    
+
     try {
       const decoded = decodeURIComponent(url);
       // If callback URL is an auth page, ignore it
-      if (decoded.includes("/auth/signin") || 
-          decoded.includes("/auth/signup") || 
-          decoded.includes("/auth/verify-email") ||
-          decoded.includes("/auth/complete-profile")) {
+      if (decoded.includes("/auth/signin") ||
+        decoded.includes("/auth/signup") ||
+        decoded.includes("/auth/verify-email") ||
+        decoded.includes("/auth/complete-profile")) {
         return null;
       }
       return decoded;
@@ -79,8 +79,11 @@ export default withAuth(async function middleware(req) {
     return NextResponse.next();
   }
 
-  // If no user and accessing protected routes, redirect to signin
-  if (!user ) {
+  // Allow unauthenticated access to public pages (homepage, products, search)
+  const publicPages = ["/", "/products", "/search"];
+  const isPublicPage = publicPages.some(p => pathname === p || pathname.startsWith(p + "/"));
+
+  if (!user && !isPublicPage) {
     return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
 
@@ -91,7 +94,7 @@ export default withAuth(async function middleware(req) {
       return cleanCallback;
     }
     // Check hasProfile from JWT token instead of database
-    return user.hasProfile ? "/" : "/auth/complete-profile";
+    return user?.hasProfile ? "/" : "/auth/complete-profile";
   };
 
   // Handle auth pages when user is already authenticated
@@ -117,7 +120,7 @@ export default withAuth(async function middleware(req) {
   // Handle home page - redirect verified users without profile to complete profile
   if (pathname === "/") {
     if (user?.isVerified) {
-      const hasProfile = user.hasProfile || false;
+      const hasProfile = user?.hasProfile || false;
       if (!hasProfile) {
         return NextResponse.redirect(new URL("/auth/complete-profile", req.url));
       }
@@ -131,10 +134,10 @@ export default withAuth(async function middleware(req) {
     if (!user?.isVerified) {
       return NextResponse.redirect(new URL("/auth/verify-email", req.url));
     }
-    
-    const hasProfile = user.hasProfile || false;
+
+    const hasProfile = user?.hasProfile || false;
     console.log("User has profile:", hasProfile);
-    
+
     if (hasProfile) {
       const cleanCallback = getCleanCallbackUrl(callbackUrl);
       const destination = cleanCallback || "/";
@@ -147,8 +150,8 @@ export default withAuth(async function middleware(req) {
   }
 
   if (pathname.startsWith("/checkout")) {
-    const hasProfile = user.hasProfile || false;
-      
+    const hasProfile = user?.hasProfile || false;
+
     if (!hasProfile) {
       const profileUrl = new URL("/auth/complete-profile", req.url);
       profileUrl.searchParams.set("callbackUrl", pathname);
@@ -157,12 +160,12 @@ export default withAuth(async function middleware(req) {
   }
 
   // Handle protected routes - only cart and checkout require authentication
-  if (pathname.startsWith("/cart") || 
-      pathname.startsWith("/checkout") || 
-      pathname.startsWith("/orders")) {
-    
+  if (pathname.startsWith("/cart") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/orders")) {
+
     console.log("Protected route access - user verification:", user?.isVerified);
-    
+
     if (!user?.isVerified) {
       // Store the current path as callback URL for after verification
       const verifyUrl = new URL("/auth/verify-email", req.url);
@@ -170,10 +173,10 @@ export default withAuth(async function middleware(req) {
       console.log("User not verified, redirecting to verify email with callback:", pathname);
       return NextResponse.redirect(verifyUrl);
     }
-    
-    const hasProfile = user.hasProfile || false;
+
+    const hasProfile = user?.hasProfile || false;
     console.log("User has profile:", hasProfile);
-    
+
     if (!hasProfile) {
       // Store the current path as callback URL for after profile completion
       const profileUrl = new URL("/auth/complete-profile", req.url);
@@ -184,23 +187,23 @@ export default withAuth(async function middleware(req) {
   }
 
   // Role-specific dashboards require authentication and verification
-  if (pathname.startsWith("/admin") || 
-      pathname.startsWith("/seller") || 
-      pathname.startsWith("/support") || 
-      pathname.startsWith("/delivery") ||
-      pathname.startsWith("/driver")) {
-    
+  if (pathname.startsWith("/admin") ||
+    pathname.startsWith("/seller") ||
+    pathname.startsWith("/support") ||
+    pathname.startsWith("/delivery") ||
+    pathname.startsWith("/driver")) {
+
     if (!user?.isVerified) {
       const verifyUrl = new URL("/auth/verify-email", req.url);
       verifyUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(verifyUrl);
     }
-    
+
     // For driver routes, skip the hasProfile check since delivery partners
     // don't necessarily need a customer profile, just a delivery profile
     if (!pathname.startsWith("/driver")) {
-      const hasProfile = user.hasProfile || false;
-      
+      const hasProfile = user?.hasProfile || false;
+
       if (!hasProfile) {
         const profileUrl = new URL("/auth/complete-profile", req.url);
         profileUrl.searchParams.set("callbackUrl", pathname);
@@ -213,7 +216,7 @@ export default withAuth(async function middleware(req) {
   if (user?.role !== "admin" && pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
-  
+
   if (user?.role !== "seller" && pathname.startsWith("/seller")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
@@ -233,24 +236,24 @@ export default withAuth(async function middleware(req) {
   callbacks: {
     authorized: ({ token, req }) => {
       const pathname = req.nextUrl.pathname;
-      
+
       // Always allow access to auth pages
       if (pathname.startsWith("/auth/")) {
         return true;
       }
-      
+
       // For protected routes, require a token
-      if (pathname.startsWith("/cart") || 
-          pathname.startsWith("/checkout") ||
-          pathname.startsWith("/orders") ||
-          pathname.startsWith("/admin") || 
-          pathname.startsWith("/seller") || 
-          pathname.startsWith("/support") || 
-          pathname.startsWith("/delivery") ||
-          pathname.startsWith("/driver")) {
+      if (pathname.startsWith("/cart") ||
+        pathname.startsWith("/checkout") ||
+        pathname.startsWith("/orders") ||
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/seller") ||
+        pathname.startsWith("/support") ||
+        pathname.startsWith("/delivery") ||
+        pathname.startsWith("/driver")) {
         return !!token;
       }
-      
+
       // For public routes (like homepage, products, search), allow access without token
       return true;
     },

@@ -4,7 +4,7 @@ import { dbConnect } from '@/lib/db';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
 import { getSellerDashboardMetrics } from '@/lib/analytics';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 export async function GET() {
   try {

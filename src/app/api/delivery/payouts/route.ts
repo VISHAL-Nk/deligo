@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from '@/lib/auth-options';
 import { dbConnect } from "@/lib/db";
 import DriverPayout from "@/models/DriverPayouts.models";
 import DeliveryProfile from "@/models/DeliveryProfiles.models";

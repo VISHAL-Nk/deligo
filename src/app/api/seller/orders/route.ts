@@ -4,7 +4,7 @@ import { dbConnect } from '@/lib/db';
 import Order from '@/models/Orders.models';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 // GET - List all orders for seller
 export async function GET(req: NextRequest) {

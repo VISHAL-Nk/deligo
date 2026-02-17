@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { dbConnect } from '@/lib/db';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import {
   getSalesAnalytics,
   getTopSellingProducts,

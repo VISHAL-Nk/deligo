@@ -7,7 +7,7 @@ import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
 import Payout from '@/models/Payouts.models';
 import Shipment from '@/models/Shipments.models';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { calculateCommission } from '@/lib/analytics';
 
 // GET - Get single order

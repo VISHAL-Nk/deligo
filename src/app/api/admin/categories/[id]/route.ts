@@ -4,7 +4,7 @@ import { dbConnect } from '@/lib/db';
 import Category from '@/models/ProductCategories.models';
 import Product from '@/models/Products.models';
 import User from '@/models/User.models';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 // GET - Get single category
 export async function GET(

@@ -5,7 +5,7 @@ import Review from '@/models/Reviews.models';
 import Product from '@/models/Products.models';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 // GET - Get all reviews for seller's products
 export async function GET(req: NextRequest) {

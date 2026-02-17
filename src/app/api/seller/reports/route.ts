@@ -6,7 +6,7 @@ import Product from '@/models/Products.models';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
 import Payout from '@/models/Payouts.models';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { generateInvoicePDF, generateSalesReportPDF, generatePayoutReportPDF } from '@/lib/pdf-generator';
 import { exportSalesReportCSV, exportProductsCSV, exportPayoutsCSV } from '@/lib/csv-excel-utils';
 

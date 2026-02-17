@@ -5,7 +5,7 @@ import Product from '@/models/Products.models';
 import SellerProfile from '@/models/SellerProfiles.models';
 import User from '@/models/User.models';
 import InventoryLog from '@/models/InventoryLogs.models';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { uploadProductImage, deleteMultipleCloudinaryImages } from '@/lib/cloudinary';
 
 // GET - Get single product
