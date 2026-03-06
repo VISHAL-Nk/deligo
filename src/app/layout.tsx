@@ -18,8 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Deligo - Online Shopping Platform",
-  description: "Your one-stop shop for all your needs",
+  title: "Deligo - Online Shopping Platform | Quality Products, Fast Delivery",
+  description:
+    "Shop from thousands of quality products at great prices on Deligo. Enjoy fast delivery, easy returns, secure payments, and AI-powered product recommendations. Your trusted Indian e-commerce marketplace.",
 };
 
 export default function RootLayout({

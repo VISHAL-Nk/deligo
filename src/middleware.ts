@@ -79,8 +79,8 @@ export default withAuth(async function middleware(req) {
     return NextResponse.next();
   }
 
-  // Allow unauthenticated access to public pages (homepage, products, search)
-  const publicPages = ["/", "/products", "/search"];
+  // Allow unauthenticated access to public pages (homepage, products, search, info pages)
+  const publicPages = ["/", "/products", "/search", "/about", "/contact", "/privacy-policy", "/terms"];
   const isPublicPage = publicPages.some(p => pathname === p || pathname.startsWith(p + "/"));
 
   if (!user && !isPublicPage) {

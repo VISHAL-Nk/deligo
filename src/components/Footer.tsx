@@ -15,12 +15,23 @@ interface NavLink {
 }
 
 const Footer: React.FC = () => {
-  const navLinks: NavLink[] = [
+  const quickLinks: NavLink[] = [
     { href: "/", label: "Home" },
+    { href: "/products", label: "Products" },
     { href: "/cart", label: "Cart" },
-    { href: "/login", label: "Login" },
-    { href: "/sellerapplication", label: "Apply for seller" },
-    { href: "/deliveryapplication", label: "Apply for Delivery partner" },
+    { href: "/search", label: "Search" },
+  ];
+
+  const companyLinks: NavLink[] = [
+    { href: "/about", label: "About Us" },
+    { href: "/contact", label: "Contact Us" },
+    { href: "/sellerapplication", label: "Become a Seller" },
+    { href: "/deliveryapplication", label: "Delivery Partner" },
+  ];
+
+  const legalLinks: NavLink[] = [
+    { href: "/privacy-policy", label: "Privacy Policy" },
+    { href: "/terms", label: "Terms of Service" },
   ];
 
   const socialLinks: SocialLink[] = [
@@ -43,36 +54,16 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-gray-100 text-gray-700 mt-12 border-t">
-      <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         {/* Brand Section */}
-        <div>
+        <div className="lg:col-span-2">
           <h2 className="text-2xl font-bold text-green-600">Deligo</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Delivering groceries and essentials at lightning speed 🚀
+            Your trusted online shopping platform delivering quality products
+            at great prices with fast, reliable shipping across India. 🚀
           </p>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <h3 className="font-semibold text-gray-800 mb-3">Quick Links</h3>
-          <ul className="space-y-2">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="hover:text-green-600 transition-colors duration-200"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Social Links */}
-        <div>
-          <h3 className="font-semibold text-gray-800 mb-3">Follow Us</h3>
-          <div className="flex space-x-4">
+          {/* Social Links */}
+          <div className="flex space-x-4 mt-4">
             {socialLinks.map((social) => (
               <a
                 key={social.href}
@@ -86,6 +77,57 @@ const Footer: React.FC = () => {
               </a>
             ))}
           </div>
+        </div>
+
+        {/* Quick Links */}
+        <div>
+          <h3 className="font-semibold text-gray-800 mb-3">Quick Links</h3>
+          <ul className="space-y-2">
+            {quickLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="text-sm hover:text-green-600 transition-colors duration-200"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Company */}
+        <div>
+          <h3 className="font-semibold text-gray-800 mb-3">Company</h3>
+          <ul className="space-y-2">
+            {companyLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="text-sm hover:text-green-600 transition-colors duration-200"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Legal */}
+        <div>
+          <h3 className="font-semibold text-gray-800 mb-3">Legal</h3>
+          <ul className="space-y-2">
+            {legalLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="text-sm hover:text-green-600 transition-colors duration-200"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
