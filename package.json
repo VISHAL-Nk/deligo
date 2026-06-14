@@ -9,6 +9,7 @@
     "dev:recommendation": "cd recommendation-server && bash -c '[ ! -d venv ] && python3 -m venv venv || true; source venv/bin/activate && pip install -r requirements-minimal.txt --quiet && python main.py'",
     "dev:search": "cd search-server && bash -c '[ ! -d venv ] && python3 -m venv venv || true; source venv/bin/activate && pip install -r requirements.txt --quiet && python main.py'",
     "dev:demand": "cd demand-server && bash -c '[ ! -d venv ] && python3 -m venv venv || true; source venv/bin/activate && pip install -r requirements.txt --quiet && python main.py'",
+    "dev:chatbot": "cd Chatbot-server && bash -c '[ ! -d venv ] && python3 -m venv venv || true; source venv/bin/activate && pip install -r requirements.txt --quiet && python main.py'",
     "setup:recommendation": "cd recommendation-server && bash -c 'python3 -m venv venv && source venv/bin/activate && pip install -r requirements-minimal.txt'",
     "setup:search": "cd search-server && bash -c 'python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt'",
     "setup:demand": "cd demand-server && bash -c 'python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt'",
