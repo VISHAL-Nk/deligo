@@ -3,7 +3,8 @@
 import { dbConnect, dbDisconnect } from "@/lib/db";
 import Product from "@/models/Products.models";
 import { type NextRequest } from "next/server";
-import { getAutocomplete, isSearchServerConfigured } from "@/lib/search";
+
+const SEARCH_SERVER_URL = process.env.SEARCH_SERVER_URL || '';
 
 export async function GET(req: NextRequest) {
   try {
@@ -23,49 +24,51 @@ export async function GET(req: NextRequest) {
     }
 
     // Try search server first for typo tolerance
-    try {
-      // Direct fetch to search server for better reliability
-      const testResponse = await fetch(`http://localhost:8002/autocomplete?q=${encodeURIComponent(query)}&limit=10`);
-      if (testResponse.ok) {
-        const autocomplete = await testResponse.json();
-      
-      return new Response(JSON.stringify({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        suggestions: autocomplete.products.map((p: any, index: number) => ({
-          id: `product_${index}`,
-          text: p.name,
-          type: 'product' as const,
-          count: 1,
-          image: p.image,
-          category: p.category_name,
-          price: p.price
-        })),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        categories: autocomplete.categories.map((c: any, index: number) => ({
-          id: `category_${index}`,
-          text: c.name,
-          type: 'category' as const,
-          count: c.product_count
-        })),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        trending: autocomplete.suggestions.map((s: any, index: number) => ({
-          id: `suggestion_${index}`,
-          text: s,
-          type: 'trending' as const,
-          count: 0
-        })),
-        recent: [],
-        source: 'meilisearch'
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
-      } else {
-        throw new Error(`Search server returned ${testResponse.status}`);
+    if (SEARCH_SERVER_URL) {
+      try {
+        // Direct fetch to search server for better reliability
+        const testResponse = await fetch(`${SEARCH_SERVER_URL}/autocomplete?q=${encodeURIComponent(query)}&limit=10`);
+        if (testResponse.ok) {
+          const autocomplete = await testResponse.json();
+        
+          return new Response(JSON.stringify({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            suggestions: autocomplete.products.map((p: any, index: number) => ({
+              id: `product_${index}`,
+              text: p.name,
+              type: 'product' as const,
+              count: 1,
+              image: p.image,
+              category: p.category_name,
+              price: p.price
+            })),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            categories: autocomplete.categories.map((c: any, index: number) => ({
+              id: `category_${index}`,
+              text: c.name,
+              type: 'category' as const,
+              count: c.product_count
+            })),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            trending: autocomplete.suggestions.map((s: any, index: number) => ({
+              id: `suggestion_${index}`,
+              text: s,
+              type: 'trending' as const,
+              count: 0
+            })),
+            recent: [],
+            source: 'meilisearch'
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } else {
+          throw new Error(`Search server returned ${testResponse.status}`);
+        }
+      } catch (searchError) {
+        console.error('Search server failed, falling back to MongoDB:', searchError);
+        // Fall through to MongoDB fallback
       }
-    } catch (searchError) {
-      console.error('Search server failed, falling back to MongoDB:', searchError);
-      // Fall through to MongoDB fallback
     }
 
     // Fallback: MongoDB aggregation

@@ -174,9 +174,11 @@ async function getFallbackRecommendations(
             .select('items')
             .lean();
 
-          const orderedProductIds = userOrders.flatMap(
-            (order: { items?: Array<{ productId?: mongoose.Types.ObjectId }> }) =>
-              (order.items || []).map((item) => item.productId).filter(Boolean)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const orderedProductIds = userOrders.flatMap((order: any) =>
+            ((order.items as Array<{ productId?: mongoose.Types.ObjectId }>) || [])
+              .map((item) => item.productId)
+              .filter(Boolean)
           );
 
           if (orderedProductIds.length > 0) {
