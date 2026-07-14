@@ -22,7 +22,8 @@ export default withAuth(async function middleware(req) {
     '/api/category',
     '/api/search',           // All search endpoints should be public
     '/api/recommendations',  // ML Recommendation API
-    '/api/analytics/view'    // View tracking for recommendations
+    '/api/analytics/view',   // View tracking for recommendations
+    '/api/chat',             // Chatbot API (handles auth internally via user_id param)
   ];
 
   const pathname = req.nextUrl.pathname;

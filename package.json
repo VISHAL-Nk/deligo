@@ -2,6 +2,9 @@
   "name": "deligo",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "./start-dev.sh",
     "dev:old": "concurrently \"npm run dev:next\" \"npm run dev:recommendation\" \"npm run dev:search\" --names \"NEXT,RECOMMEND,SEARCH\" --prefix-colors \"cyan,magenta,yellow\"",
@@ -16,7 +19,7 @@
     "setup:all": "npm run setup:recommendation && npm run setup:search && npm run setup:demand",
     "status": "./check-servers.sh",
     "stop": "./stop-dev.sh",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "create-admin": "npx tsx scripts/create-admin.ts"

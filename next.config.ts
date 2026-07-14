@@ -1,5 +1,6 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
   // Image optimization configuration
   images: {
     remotePatterns: [
@@ -44,6 +45,10 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'react-hot-toast'],
   },
 
+  // Packages that must run on Node.js, not bundled by webpack.
+  // Prevents "cannot be used in an Edge Runtime" errors on Vercel.
+  serverExternalPackages: ['mongoose', 'mongodb', 'nodemailer', 'bcryptjs', 'jsonwebtoken'],
+
   // Compiler optimizations
   compiler: {
     // Remove console.log in production
@@ -65,4 +70,4 @@ const nextConfig = {
   generateEtags: true,
 };
 
-module.exports = nextConfig;
+export default nextConfig;

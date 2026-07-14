@@ -24,20 +24,24 @@ import {
   type SearchOptions,
 } from "@/lib/search";
 
-// Flag to track search server availability
+const SEARCH_SERVER_URL = process.env.SEARCH_SERVER_URL || '';
+
+// Flag to track search server availability (only relevant if SEARCH_SERVER_URL is set)
 let searchServerAvailable: boolean | null = null;
 let lastHealthCheck = 0;
 const HEALTH_CHECK_INTERVAL = 60000; // Check every minute
 
 async function checkSearchServer(): Promise<boolean> {
+  // If no search server URL is configured, skip entirely
+  if (!SEARCH_SERVER_URL) return false;
+
   const now = Date.now();
   if (searchServerAvailable !== null && now - lastHealthCheck < HEALTH_CHECK_INTERVAL) {
     return searchServerAvailable;
   }
 
   try {
-    // Direct fetch to test connection
-    const response = await fetch('http://localhost:8002/health', { 
+    const response = await fetch(`${SEARCH_SERVER_URL}/health`, { 
       signal: AbortSignal.timeout(3000) 
     });
     searchServerAvailable = response.ok;
@@ -115,7 +119,7 @@ export async function GET(req: NextRequest) {
         if (hasDiscount === 'true') options.hasDiscount = true;
 
         // Search using advanced search server
-        const searchResponse = await fetch('http://localhost:8002/search', {
+        const searchResponse = await fetch(`${SEARCH_SERVER_URL}/search`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
