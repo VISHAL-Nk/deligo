@@ -19,6 +19,14 @@ import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 
+// Extend window for Deligo chat globals
+declare global {
+  interface Window {
+    DELIGO_CHAT_USER_ID?: string;
+    DELIGO_CHAT_API_BASE?: string;
+  }
+}
+
 // External chatbot server URL (only set if self-hosting the Python server)
 // Leave NEXT_PUBLIC_CHATBOT_URL unset in Vercel to use the internal Next.js route.
 const EXTERNAL_CHATBOT_URL = process.env.NEXT_PUBLIC_CHATBOT_URL || "";

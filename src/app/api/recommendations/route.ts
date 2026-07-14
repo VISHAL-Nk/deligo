@@ -186,9 +186,10 @@ async function getFallbackRecommendations(
             const orderedProducts = await Product.find({ _id: { $in: orderedProductIds } })
               .select('categoryId')
               .lean();
-            const categoryIds = Array.from(new Set(orderedProducts.map(
-              (p: { categoryId?: mongoose.Types.ObjectId }) => p.categoryId?.toString()
-            ).filter(Boolean))) as string[];
+            const categoryIds = Array.from(new Set(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              orderedProducts.map((p: any) => p.categoryId?.toString())
+            ).values()).filter(Boolean) as string[];
 
             if (categoryIds.length > 0) {
               // Recommend from same categories but different products

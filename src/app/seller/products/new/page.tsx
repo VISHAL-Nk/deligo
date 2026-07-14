@@ -476,7 +476,7 @@ export default function NewProductPage() {
         initialName={formData.name}
         initialCategory={categories.find(c => c._id === formData.categoryId)?.name || ''}
         onAutoFill={(data) => {
-          let matchedCategoryId = prev => prev.categoryId;
+          let matchedCategoryId: string | null = null;
           if (data.category) {
             const match = categories.find(c => c.name.toLowerCase().includes(data.category!.toLowerCase()) || data.category!.toLowerCase().includes(c.name.toLowerCase()));
             if (match) {
@@ -489,7 +489,7 @@ export default function NewProductPage() {
             name: data.title || prev.name,
             description: data.description || prev.description,
             price: data.price || prev.price,
-            categoryId: typeof matchedCategoryId === 'string' ? matchedCategoryId : prev.categoryId,
+            categoryId: matchedCategoryId !== null ? matchedCategoryId : prev.categoryId,
             seo: {
               ...prev.seo,
               metaTitle: data.title || prev.seo.metaTitle,

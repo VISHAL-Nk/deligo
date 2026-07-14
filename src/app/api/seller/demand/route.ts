@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { dbConnect } from "@/lib/db";
 import Product from "@/models/Products.models";
@@ -100,7 +100,8 @@ async function estimateDemandFromOrders(
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const session = (await getServerSession(authOptions as any)) as any;
     if (
       !session ||
       (session.user.role !== "seller" && session.user.role !== "admin")
@@ -217,17 +218,19 @@ export async function GET(request: Request) {
 
       const alerts = [];
       for (const p of products) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const prod = p as any;
         const { total_predicted_demand } = await estimateDemandFromOrders(
-          p._id.toString(),
+          prod._id.toString(),
           days
         );
-        if (total_predicted_demand > (p.stock || 0)) {
+        if (total_predicted_demand > (prod.stock || 0)) {
           alerts.push({
-            product_id: p._id.toString(),
-            name: p.name,
-            current_stock: p.stock || 0,
+            product_id: prod._id.toString(),
+            name: prod.name,
+            current_stock: prod.stock || 0,
             predicted_demand_7d: Math.round(total_predicted_demand),
-            shortfall: Math.round(total_predicted_demand - (p.stock || 0)),
+            shortfall: Math.round(total_predicted_demand - (prod.stock || 0)),
             source: "order_history_estimate",
           });
         }
@@ -256,24 +259,23 @@ export async function GET(request: Request) {
       if (DEMAND_SERVER_URL) {
         try {
           const forecastPromises = sellerProducts.map(async (product) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const p = product as any;
             try {
               const controller = new AbortController();
               const timer = setTimeout(() => controller.abort(), 10000);
               const response = await fetch(
-                `${DEMAND_SERVER_URL}/api/forecast/${product._id}?days=${days}`,
+                `${DEMAND_SERVER_URL}/api/forecast/${p._id}?days=${days}`,
                 { signal: controller.signal }
               );
               clearTimeout(timer);
               if (response.ok) {
                 const data = await response.json();
                 return {
-                  product_id: product._id.toString(),
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  name: (product as any).name,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  current_stock: (product as any).stock || 0,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  price: (product as any).price || 0,
+                  product_id: p._id.toString(),
+                  name: p.name,
+                  current_stock: p.stock || 0,
+                  price: p.price || 0,
                   history: data.history || [],
                   forecasts: data.forecasts || [],
                   total_predicted_demand: data.total_predicted_demand || 0,
@@ -303,18 +305,17 @@ export async function GET(request: Request) {
 
       // Fallback: estimate from order history for all products
       const forecastPromises = sellerProducts.map(async (product) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p = product as any;
         const estimated = await estimateDemandFromOrders(
-          product._id.toString(),
+          p._id.toString(),
           days
         );
         return {
-          product_id: product._id.toString(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          name: (product as any).name,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          current_stock: (product as any).stock || 0,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          price: (product as any).price || 0,
+          product_id: p._id.toString(),
+          name: p.name,
+          current_stock: p.stock || 0,
+          price: p.price || 0,
           ...estimated,
           source: "order_history_estimate",
         };
